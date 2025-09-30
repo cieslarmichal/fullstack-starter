@@ -5,11 +5,9 @@ import { Pool } from 'pg';
 import { createConfig } from '../src/core/config.ts';
 
 export async function setup(): Promise<void> {
-  // TODO: enable setup db when github actions is ready
-  // await setupDb();
+  await setupDb();
 }
 
-// @ts-expect-error TODO: enable setup db when github actions is ready
 async function setupDb(): Promise<void> {
   try {
     const config = createConfig();

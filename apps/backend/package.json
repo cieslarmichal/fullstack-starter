@@ -10,8 +10,9 @@
     "test:ci": "npm run test -- --run",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
-    "db:generate": "npx drizzle-kit generate",
-    "db:push": "npx drizzle-kit push"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.848.0",

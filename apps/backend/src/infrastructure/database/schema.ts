@@ -13,6 +13,5 @@ export const blacklistedTokens = pgTable('blacklisted_tokens', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  tokenHash: text('token_hash').notNull(),
   expiresAt: timestamp('expires_at').notNull(),
 });
