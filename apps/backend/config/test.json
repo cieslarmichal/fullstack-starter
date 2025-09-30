@@ -1,0 +1,22 @@
+{
+  "aws": {
+    "accessKeyId": "test",
+    "secretAccessKey": "test",
+    "endpoint": "http://127.0.0.1:4566",
+    "bucketName": "monorepo-template-test"
+  },
+  "database": {
+    "url": "postgres://postgres:postgres@localhost:5432/monorepo-template"
+  },
+  "cookie": {
+    "secret": "12345678901a"
+  },
+  "token": {
+    "access": {
+      "secret": "12321313423565365654546654121890008a"
+    },
+    "refresh": {
+      "secret": "12321313423565365654546654121890008b"
+    }
+  }
+}

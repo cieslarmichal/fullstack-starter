@@ -1,0 +1,33 @@
+{
+  "name": "monorepo-template",
+  "scripts": {
+    "build": "turbo run build",
+    "build:dev": "turbo run build:dev",
+    "test": "turbo run test:ci --concurrency 5",
+    "lint": "turbo run lint --concurrency 5",
+    "lint:fix": "turbo run lint:fix"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin": "5.4.0",
+    "@types/node": "24.5.2",
+    "eslint": "9.36.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-perfectionist": "4.15.0",
+    "prettier": "3.6.2",
+    "turbo": "2.5.8",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.44.1"
+  },
+  "volta": {
+    "node": "24.9.0",
+    "npm": "11.6.1"
+  },
+  "engines": {
+    "node": ">=24",
+    "npm": ">=11"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "packageManager": "npm@11.6.1"
+}

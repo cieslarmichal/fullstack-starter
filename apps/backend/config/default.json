@@ -1,0 +1,31 @@
+{
+  "aws": {
+    "accessKeyId": null,
+    "secretAccessKey": null,
+    "region": "eu-central-1",
+    "bucketName": "monorepo-template"
+  },
+  "database": {
+    "url": null
+  },
+  "cookie": {
+    "secret": null
+  },
+  "frontendUrl": "http://localhost:5173",
+  "hashSaltRounds": 12,
+  "logLevel": "debug",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 5000
+  },
+  "token": {
+    "access": {
+      "secret": null,
+      "expiresIn": 600
+    },
+    "refresh": {
+      "secret": null,
+      "expiresIn": 604800
+    }
+  }
+}
