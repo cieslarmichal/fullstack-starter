@@ -1,4 +1,4 @@
-# Fullstack Monorepo Template
+# Fullstack Starter
 
 ## Features
 
