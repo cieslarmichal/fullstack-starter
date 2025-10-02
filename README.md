@@ -52,14 +52,22 @@
     npm run test
     ```
 
-6. Start frontend app (in a new terminal):
+6. Run database migrations:
+
+   ```bash
+   cd apps/backend
+   export DATABASE_URL=postgres://postgres:postgres@localhost:5432/monorepo-starter
+   npm run db:push
+   ```
+
+7. Start frontend app (in a new terminal):
 
    ```bash
    cd apps/frontend
    npm run dev
    ```
 
-7. Start backend app (in a new terminal):
+8. Start backend app (in a new terminal):
 
    ```bash
    cd apps/backend
