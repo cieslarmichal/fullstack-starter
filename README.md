@@ -52,7 +52,7 @@
     npm run test
     ```
 
-6. Run database migrations:
+6. Run database migrations (if you ran tests before, you can skip this step because the test setup already runs migrations):
 
    ```bash
    cd apps/backend
