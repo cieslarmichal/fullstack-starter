@@ -1,30 +1,25 @@
-FROM node:24.4.0-alpine AS base
+FROM node:24.9.0-alpine AS base
 
-RUN apk update
-RUN apk add --no-cache libc6-compat bash
+RUN apk update && apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-FROM base AS builder
+FROM base AS pruner
 
-RUN npm i -g turbo@2.5.4
-
-COPY package*.json ./
-COPY turbo.json ./
+COPY package*.json turbo.json tsconfig.json ./
 COPY apps/ ./apps
-COPY tsconfig.json ./
 
-RUN turbo prune --scope="@apps/backend" --docker
+RUN npx turbo@2.5.8 prune --scope="@apps/backend" --docker
 
 FROM base AS installer
 
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/package-lock.json ./package-lock.json
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
 COPY tsconfig.json ./
 
 RUN npm ci
 
-COPY --from=builder /app/out/full/ .
+COPY --from=pruner /app/out/full/ .
 
 RUN npm run build --filter="@apps/backend"
 
@@ -38,8 +33,8 @@ COPY --from=installer /app/apps/backend/dist ./apps/backend
 COPY --from=installer /app/apps/backend/config ./apps/backend/config
 COPY --from=installer /app/apps/backend/package.json ./apps/backend/package.json
 
-RUN npm ci
+RUN npm ci --omit=dev
 
 USER node
 
-CMD node apps/backend/src/index.js
+CMD ["node", "apps/backend/src/index.js"]
