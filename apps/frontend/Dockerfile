@@ -26,6 +26,4 @@ RUN npm run build --filter="@apps/frontend"
 FROM nginx as static
 
 COPY --from=installer /app/apps/frontend/nginx/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=installer /app/apps/frontend/nginx/.htpasswd /etc/nginx/conf.d/.htpasswd
-
 COPY --from=installer /app/apps/frontend/dist /usr/share/nginx/html
