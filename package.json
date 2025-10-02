@@ -1,10 +1,9 @@
 {
-  "name": "monorepo-template",
+  "name": "monorepo-starter",
   "scripts": {
     "build": "turbo run build",
     "build:dev": "turbo run build:dev",
-    "test": "turbo run test --concurrency 5",
-    "test:ci": "turbo run test:ci --concurrency 5",
+    "test": "turbo run test:ci --concurrency 5",
     "lint": "turbo run lint --concurrency 5",
     "lint:fix": "turbo run lint:fix"
   },

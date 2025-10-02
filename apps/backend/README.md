@@ -11,7 +11,7 @@ docker-compose up
 * In backend directory run:
 
 ```bash
-export DATABASE_URL=postgres://postgres:postgres@localhost:5432/monorepo-template
+export DATABASE_URL=postgres://postgres:postgres@localhost:5432/monorepo-starter
 npm run db:push
 ```
 

@@ -1,7 +1,7 @@
 services:
   localstack:
     image: localstack/localstack
-    container_name: monorepo-template-localstack
+    container_name: monorepo-starter-localstack
     ports:
       - "4566:4566"
     environment:
@@ -18,15 +18,15 @@ services:
 
   database-postgres:
     image: postgres:17
-    container_name: monorepo-template-postgres
+    container_name: monorepo-starter-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: monorepo-template
+      POSTGRES_DB: monorepo-starter
     ports:
       - 5432:5432
     volumes:
-      - monorepo-template-pgdata:/var/lib/postgresql/data
+      - monorepo-starter-pgdata:/var/lib/postgresql/data
 
 volumes:
-  monorepo-template-pgdata:
+  monorepo-starter-pgdata:

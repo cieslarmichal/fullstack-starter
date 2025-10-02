@@ -5,7 +5,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "tsc --noEmit && vite build",
-    "build:dev": "tsc --noEmit && vite build",
+    "build:dev": "tsc --noEmit && vite build --mode development",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "preview": "vite preview"

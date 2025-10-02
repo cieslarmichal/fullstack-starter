@@ -1,6 +1,6 @@
 {
   "database": {
-    "url": "postgres://postgres:postgres@localhost:5432/monorepo-template"
+    "url": "postgres://postgres:postgres@localhost:5432/monorepo-starter"
   },
   "cookie": {
     "secret": "12345678901a"

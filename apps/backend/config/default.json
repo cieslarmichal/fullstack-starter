@@ -3,7 +3,7 @@
     "accessKeyId": null,
     "secretAccessKey": null,
     "region": "eu-central-1",
-    "bucketName": "monorepo-template"
+    "bucketName": "monorepo-starter"
   },
   "database": {
     "url": null

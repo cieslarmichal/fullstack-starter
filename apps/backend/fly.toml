@@ -1,4 +1,4 @@
-app = "monorepo-template-backend"
+app = "monorepo-starter-backend"
 primary_region = "waw"
 
 [build]

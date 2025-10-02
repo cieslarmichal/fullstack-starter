@@ -3,10 +3,10 @@
     "accessKeyId": "test",
     "secretAccessKey": "test",
     "endpoint": "http://127.0.0.1:4566",
-    "bucketName": "monorepo-template-test"
+    "bucketName": "monorepo-starter-test"
   },
   "database": {
-    "url": "postgres://postgres:postgres@localhost:5432/monorepo-template"
+    "url": "postgres://postgres:postgres@localhost:5432/monorepo-starter"
   },
   "cookie": {
     "secret": "12345678901a"
