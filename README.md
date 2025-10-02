@@ -9,7 +9,7 @@
 - **CI/CD**: GitHub Actions for continuous integration and deployment to Fly.io.
 - **Monorepo Management**: Using Turborepo for efficient monorepo management.
 - **Testing**: Vitest for automated testing for backend and frontend.
-- **User module**: Basic routes for registration, login and user session management.
+- **User module**: Basic pages for login and sign up integrated with backend.
 
 ## Getting Started
 
