@@ -5,10 +5,10 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    files: ['src/**/*.ts', 'tests/**/*.ts'],
+    files: ['**/*.ts'],
   },
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/*.mjs', '**/*.js'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/*.mjs', '**/*.js', 'drizzle.config.ts'],
   },
   {
     languageOptions: {
