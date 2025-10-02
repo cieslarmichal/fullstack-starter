@@ -47,7 +47,7 @@ export default function Header() {
                       className="pt-2 hover:text-primary cursor-pointer flex items-center gap-2"
                     >
                       <LogOut className="h-4 w-4" />
-                      Wyloguj się
+                      Log out
                     </MenubarItem>
                   </MenubarContent>
                 </MenubarMenu>
@@ -68,7 +68,7 @@ export default function Header() {
                 onClick={() => navigate('/login?tab=register')}
                 className="text-sm hover:from-teal-700 hover:to-emerald-600 transition-all duration-300 font-semibold text-white rounded-md"
               >
-                Register
+                Sign Up
               </Button>
             </div>
           )}
