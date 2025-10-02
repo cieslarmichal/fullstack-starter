@@ -29,5 +29,9 @@
   "workspaces": [
     "apps/*"
   ],
-  "packageManager": "npm@11.6.1"
+  "packageManager": "npm@11.6.1",
+  "dependencies": {
+    "drizzle-kit": "^0.31.5",
+    "drizzle-orm": "^0.44.6"
+  }
 }
