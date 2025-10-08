@@ -1,5 +1,4 @@
-import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import { Type, type Static } from '@sinclair/typebox';
+import { Type, type Static, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { createAuthenticationMiddleware, createAuthorizationMiddleware } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
@@ -133,6 +132,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     schema: {
       response: {
         200: Type.Object({ accessToken: Type.String() }),
+        401: Type.Null(),
       },
     },
     handler: async (request, reply) => {
