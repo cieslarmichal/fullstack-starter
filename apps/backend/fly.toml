@@ -1,5 +1,5 @@
-app = "monorepo-starter-backend"
-primary_region = "waw"
+app = "fullstack-starter-backend"
+primary_region = "fra"
 
 [build]
   dockerfile = "./Dockerfile"

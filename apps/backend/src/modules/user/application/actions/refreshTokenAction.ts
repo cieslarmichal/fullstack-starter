@@ -53,9 +53,9 @@ export class RefreshTokenAction {
 
     const user = await this.userRepository.findById(tokenPayload.userId);
 
-    if (!user || user.isDeleted) {
+    if (!user) {
       throw new UnauthorizedAccessError({
-        reason: 'User not found or deleted',
+        reason: 'User not found',
         userId: tokenPayload.userId,
       });
     }

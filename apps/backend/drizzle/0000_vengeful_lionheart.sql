@@ -9,7 +9,6 @@ CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"email" varchar(255) NOT NULL,
 	"password" text NOT NULL,
-	"is_deleted" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );

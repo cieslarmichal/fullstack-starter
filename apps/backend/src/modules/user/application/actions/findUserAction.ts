@@ -20,14 +20,6 @@ export class FindUserAction {
       });
     }
 
-    if (user.isDeleted) {
-      throw new ResourceNotFoundError({
-        resource: 'User',
-        reason: 'User has been deleted',
-        userId: id,
-      });
-    }
-
     return user;
   }
 }

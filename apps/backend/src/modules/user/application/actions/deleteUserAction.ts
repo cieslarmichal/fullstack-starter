@@ -27,7 +27,7 @@ export class DeleteUserAction {
       });
     }
 
-    await this.userRepository.markAsDeleted(id);
+    await this.userRepository.delete(id);
 
     this.loggerService.info({
       message: 'User deleted successfully.',

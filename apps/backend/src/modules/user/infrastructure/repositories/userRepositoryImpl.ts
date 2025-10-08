@@ -42,13 +42,8 @@ export class UserRepositoryImpl implements UserRepository {
     return user ? this.mapToUser(user) : null;
   }
 
-  public async markAsDeleted(id: string): Promise<void> {
-    await this.database.db
-      .update(users)
-      .set({
-        isDeleted: true,
-      })
-      .where(eq(users.id, id));
+  public async delete(id: string): Promise<void> {
+    await this.database.db.delete(users).where(eq(users.id, id));
   }
 
   private mapToUser(dbUser: typeof users.$inferSelect): User {
@@ -56,7 +51,6 @@ export class UserRepositoryImpl implements UserRepository {
       id: dbUser.id,
       email: dbUser.email,
       password: dbUser.password,
-      isDeleted: dbUser.isDeleted,
       createdAt: dbUser.createdAt,
     };
 

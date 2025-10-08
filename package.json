@@ -1,5 +1,5 @@
 {
-  "name": "monorepo-starter",
+  "name": "fullstack-starter",
   "scripts": {
     "build": "turbo run build",
     "build:dev": "turbo run build:dev",

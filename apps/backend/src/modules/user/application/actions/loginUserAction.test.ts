@@ -90,21 +90,5 @@ describe('LoginUserAction', () => {
         }),
       ).rejects.toThrow(UnauthorizedAccessError);
     });
-
-    it('throws UnauthorizedAccessError when user is deleted', async () => {
-      const password = Generator.password();
-
-      const userData = Generator.userData({ password: await passwordService.hashPassword(Generator.password()) });
-
-      const user = await userRepository.create(userData);
-      await userRepository.markAsDeleted(user.id);
-
-      await expect(
-        loginUserAction.execute({
-          email: userData.email,
-          password,
-        }),
-      ).rejects.toThrow(UnauthorizedAccessError);
-    });
   });
 });

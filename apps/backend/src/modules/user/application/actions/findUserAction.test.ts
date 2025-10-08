@@ -44,14 +44,5 @@ describe('FindUserAction', () => {
 
       await expect(findUserAction.execute(nonExistentId)).rejects.toThrow(ResourceNotFoundError);
     });
-
-    it('throws ResourceNotFoundError when user is deleted', async () => {
-      const userData = Generator.userData();
-
-      const user = await userRepository.create(userData);
-      await userRepository.markAsDeleted(user.id);
-
-      await expect(findUserAction.execute(user.id)).rejects.toThrow(ResourceNotFoundError);
-    });
   });
 });

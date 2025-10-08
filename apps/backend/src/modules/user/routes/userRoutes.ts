@@ -1,6 +1,5 @@
-import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { Type, type Static } from '@sinclair/typebox';
-import type { FastifyInstance } from 'fastify';
 
 import { createAuthenticationMiddleware, createAuthorizationMiddleware } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
@@ -21,30 +20,21 @@ import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositor
 const userSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
   email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
-  isDeleted: Type.Boolean(),
   createdAt: Type.String({ format: 'date-time' }),
 });
 
-export async function userRoutes(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fastify: FastifyInstance<any, any, any, any, TypeBoxTypeProvider>,
-  {
-    config,
-    tokenService,
-    loggerService,
-    database,
-  }: {
-    database: Database;
-    config: Config;
-    loggerService: LoggerService;
-    tokenService: TokenService;
-  },
-): Promise<void> {
+export const userRoutes: FastifyPluginAsyncTypebox<{
+  database: Database;
+  config: Config;
+  loggerService: LoggerService;
+  tokenService: TokenService;
+}> = async function (fastify, opts) {
+  const { config, database, loggerService, tokenService } = opts;
+
   const mapUserToResponse = (user: User): Static<typeof userSchema> => {
     const userResponse: Static<typeof userSchema> = {
       id: user.id,
       email: user.email,
-      isDeleted: user.isDeleted,
       createdAt: user.createdAt.toISOString(),
     };
 
@@ -195,4 +185,4 @@ export async function userRoutes(
       return reply.status(204).send();
     },
   });
-}
+};

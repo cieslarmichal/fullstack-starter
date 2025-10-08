@@ -95,24 +95,5 @@ describe('RefreshTokenAction', () => {
         UnauthorizedAccessError,
       );
     });
-
-    it('throws UnauthorizedAccessError when user is deleted', async () => {
-      const password = Generator.password();
-
-      const userData = Generator.userData({ password: await passwordService.hashPassword(password) });
-
-      const user = await userRepository.create(userData);
-
-      const loginResult = await loginUserAction.execute({
-        email: userData.email,
-        password,
-      });
-
-      await userRepository.markAsDeleted(user.id);
-
-      await expect(refreshTokenAction.execute({ refreshToken: loginResult.refreshToken })).rejects.toThrow(
-        UnauthorizedAccessError,
-      );
-    });
   });
 });

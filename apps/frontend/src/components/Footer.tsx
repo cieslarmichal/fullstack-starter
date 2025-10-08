@@ -16,7 +16,7 @@ export default function Footer() {
             <div className="h-8 w-8 bg-gradient-to-br from-teal-600 to-emerald-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">M</span>
             </div>
-            <h2 className="text-xl font-bold">Monorepo Starter</h2>
+            <h2 className="text-xl font-bold">Fullstack Starter</h2>
           </Link>
         </div>
 
@@ -27,10 +27,10 @@ export default function Footer() {
               <div className="flex items-center gap-3 text-slate-300">
                 <Mail className="h-4 w-4 text-teal-400" />
                 <a
-                  href="mailto:contact@monorepo-starter.com"
+                  href="mailto:contact@fullstack-starter.com"
                   className="hover:text-teal-400 transition-colors"
                 >
-                  contact@monorepo-starter.com
+                  contact@fullstack-starter.com
                 </a>
               </div>
               <div className="flex items-center gap-3 text-slate-300">
@@ -55,7 +55,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-4 pt-3">
                 <a
-                  href="https://facebook.com/monorepo-starter"
+                  href="https://facebook.com/fullstack-starter"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
@@ -64,7 +64,7 @@ export default function Footer() {
                   <Facebook className="h-5 w-5" />
                 </a>
                 <a
-                  href="https://instagram.com/monorepo-starter"
+                  href="https://instagram.com/fullstack-starter"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
@@ -80,7 +80,7 @@ export default function Footer() {
 
       <div className="border-t border-slate-700 mt-10 pt-6 text-center">
         <div className="flex items-center justify-center gap-2 text-slate-300 text-sm">
-          <span>© 2025 Monorepo Starter. All rights reserved.</span>
+          <span>© 2025 Fullstack Starter. All rights reserved.</span>
           <Heart className="h-4 w-4 text-teal-400" />
         </div>
       </div>

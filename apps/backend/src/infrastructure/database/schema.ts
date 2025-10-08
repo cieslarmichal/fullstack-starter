@@ -1,10 +1,9 @@
-import { boolean, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   password: text('password').notNull(),
-  isDeleted: boolean('is_deleted').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 

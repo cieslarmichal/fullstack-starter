@@ -3,7 +3,7 @@
     "accessKeyId": null,
     "secretAccessKey": null,
     "region": "eu-central-1",
-    "bucketName": "monorepo-starter"
+    "bucketName": "fullstack-starter"
   },
   "database": {
     "url": null

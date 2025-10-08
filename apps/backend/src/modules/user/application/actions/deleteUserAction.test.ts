@@ -47,7 +47,7 @@ describe('DeleteUserAction', () => {
       await deleteUserAction.execute(user.id);
 
       const deletedUser = await userRepository.findById(user.id);
-      expect(deletedUser?.isDeleted).toBe(true);
+      expect(deletedUser).toBeNull();
     });
 
     it('throws ResourceNotFoundError when user does not exist', async () => {

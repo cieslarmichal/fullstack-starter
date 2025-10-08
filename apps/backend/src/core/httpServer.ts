@@ -24,7 +24,7 @@ import { userRoutes } from '../modules/user/routes/userRoutes.ts';
 import { type Config } from './config.ts';
 
 export class HttpServer {
-  public readonly fastifyServer: FastifyInstance<any, any, any, any, TypeBoxTypeProvider>;
+  public readonly fastifyServer: FastifyInstance;
   private readonly loggerService: LoggerService;
   private readonly config: Config;
   private readonly database: Database;
@@ -250,7 +250,6 @@ export class HttpServer {
   }
 
   private async registerRoutes(): Promise<void> {
-    // const s3Service = new S3Service(S3ClientFactory.create(this.config.aws), this.config.aws.bucketName);
     const tokenService = new TokenService(this.config);
 
     await this.fastifyServer.register(userRoutes, {
@@ -261,9 +260,7 @@ export class HttpServer {
     });
 
     this.fastifyServer.get('/health', async (_request, reply) => {
-      reply.send({
-        status: 'ok',
-      });
+      reply.send({ healthy: true });
     });
   }
 }

@@ -48,15 +48,15 @@
 
 5. Run tests
 
-    ```bash
-    npm run test
-    ```
+   ```bash
+   npm run test
+   ```
 
 6. Run database migrations (if you ran tests before, you can skip this step because the test setup already runs migrations):
 
    ```bash
    cd apps/backend
-   export DATABASE_URL=postgres://postgres:postgres@localhost:5432/monorepo-starter
+   export DATABASE_URL=postgres://postgres:postgres@localhost:5432/fullstack-starter
    npm run db:push
    ```
 
