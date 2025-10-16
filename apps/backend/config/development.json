@@ -1,9 +1,4 @@
 {
-  "aws": {
-    "accessKeyId": "test",
-    "secretAccessKey": "test",
-    "endpoint": "http://127.0.0.1:4566"
-  },
   "database": {
     "url": "postgres://postgres:postgres@localhost:5432/fullstack-starter"
   },

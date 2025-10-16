@@ -4,16 +4,8 @@ import config from 'config';
 
 import { ConfigurationError } from '../common/errors/configurationError.ts';
 import { type LogLevel, logLevels } from '../common/logger/logLevel.ts';
-import { type AwsRegion, awsRegions } from '../common/types/awsRegion.ts';
 
 const configSchema = Type.Object({
-  aws: Type.Object({
-    accessKeyId: Type.String({ minLength: 1 }),
-    secretAccessKey: Type.String({ minLength: 1 }),
-    region: Type.Union([...Object.values(awsRegions).map((role) => Type.Literal(role as AwsRegion))]),
-    endpoint: Type.Optional(Type.String({ minLength: 1 })),
-    bucketName: Type.String({ minLength: 1 }),
-  }),
   database: Type.Object({ url: Type.String({ minLength: 1 }) }),
   cookie: Type.Object({ secret: Type.String({ minLength: 1 }) }),
   frontendUrl: Type.String({ minLength: 1 }),

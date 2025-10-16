@@ -1,10 +1,4 @@
 {
-  "aws": {
-    "accessKeyId": null,
-    "secretAccessKey": null,
-    "region": "eu-central-1",
-    "bucketName": "fullstack-starter"
-  },
   "database": {
     "url": null
   },
