@@ -60,7 +60,7 @@ export default function LoginForm() {
                 <FormControl>
                   <Input
                     placeholder="name@domain.com"
-                    className="h-11 border-gray-200 focus:border-teal-500 focus:ring-teal-500/20 placeholder:text-gray-400"
+                    className="h-11 border-gray-200 focus:border-black focus:ring-black/10 placeholder:text-gray-400"
                     {...field}
                   />
                 </FormControl>
@@ -79,7 +79,7 @@ export default function LoginForm() {
                     <Input
                       placeholder="Password"
                       type={showPassword ? 'text' : 'password'}
-                      className="h-11 border-gray-200 focus:border-teal-500 focus:ring-teal-500/20"
+                      className="h-11 border-gray-200 focus:border-black focus:ring-black/10"
                       {...field}
                     />
                     <Button
@@ -101,7 +101,7 @@ export default function LoginForm() {
 
           <Button
             type="submit"
-            className="w-full h-11 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:text-gray-500 font-medium transition-all duration-200 shadow-sm hover:shadow-md mt-6"
+            className="w-full h-11 bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 font-medium transition-all duration-200 shadow-sm hover:shadow-md mt-6"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? 'Signing in...' : 'Sign In'}

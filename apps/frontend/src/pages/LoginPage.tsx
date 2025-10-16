@@ -51,19 +51,29 @@ export default function LoginPage() {
           content: (
             <div className="px-6 text-center space-y-6">
               <div className="space-y-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto border-2 border-black">
+                  <svg
+                    className="w-8 h-8 text-black"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900">Welcome aboard!</h3>
-                <p className="text-slate-600">
+                <h3 className="text-xl font-semibold text-black">Welcome aboard!</h3>
+                <p className="text-gray-600">
                   Your account has been created successfully. You can now sign in with your credentials.
                 </p>
               </div>
               <button
                 onClick={handleBackToLogin}
-                className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                className="w-full h-11 bg-black hover:bg-gray-800 text-white font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 Back to Sign In
               </button>
@@ -83,32 +93,32 @@ export default function LoginPage() {
   const { title, content } = getTabContent();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-blue-50 to-indigo-50 flex justify-center pt-40">
+    <div className="min-h-screen bg-gray-50 flex justify-center pt-32">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center flex flex-col justify-end pb-3">
-          <h2 className="text-3xl font-bold text-slate-900 leading-tight">{title}</h2>
+          <h2 className="text-3xl font-bold text-black leading-tight tracking-tight">{title}</h2>
         </div>
 
         {/* Tab Navigation */}
         {!isRegistrationSuccess && (
           <div className="flex justify-center">
-            <div className="bg-white/80 backdrop-blur-sm p-1.5 rounded-2xl border border-slate-200/50 shadow-sm">
+            <div className="bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm">
               <button
-                className={`px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 cursor-pointer ${
+                className={`px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
                   activeTab === 'login'
-                    ? 'bg-white text-teal-600 shadow-lg shadow-teal-500/10 scale-105'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'text-gray-600 hover:text-black hover:bg-gray-50'
                 }`}
                 onClick={() => handleTabChange('login')}
               >
                 Sign In
               </button>
               <button
-                className={`px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 cursor-pointer ${
+                className={`px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
                   activeTab === 'register'
-                    ? 'bg-white text-teal-600 shadow-lg shadow-teal-500/10 scale-105'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'text-gray-600 hover:text-black hover:bg-gray-50'
                 }`}
                 onClick={() => handleTabChange('register')}
               >
@@ -119,9 +129,7 @@ export default function LoginPage() {
         )}
 
         {/* Form Container */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-white/50 shadow-xl shadow-slate-900/5 p-6">
-          {content}
-        </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6">{content}</div>
       </div>
     </div>
   );

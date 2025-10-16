@@ -4,19 +4,19 @@ import { Mail, Phone, MapPin, Heart, Facebook, Instagram } from 'lucide-react';
 export default function Footer() {
   return (
     <footer
-      className="bg-slate-800 text-white py-14 mt-auto"
+      className="bg-black text-white py-14 mt-auto border-t border-gray-800"
       aria-label="Footer"
     >
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:justify-between md:items-start gap-10">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:justify-between md:items-start gap-10 px-4 sm:px-6 lg:px-8">
         <div className="col-span-1 md:w-1/3">
           <Link
             to="/"
-            className="flex items-center gap-3 mb-4"
+            className="flex items-center gap-3 mb-4 group"
           >
-            <div className="h-8 w-8 bg-gradient-to-br from-teal-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">M</span>
+            <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
+              <span className="text-black font-bold text-lg">FS</span>
             </div>
-            <h2 className="text-xl font-bold">Fullstack Starter</h2>
+            <h2 className="text-xl font-bold tracking-tight">Fullstack Starter</h2>
           </Link>
         </div>
 
@@ -24,31 +24,31 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4 text-white">Contact</h3>
             <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-3 text-slate-300">
-                <Mail className="h-4 w-4 text-teal-400" />
+              <div className="flex items-center gap-3 text-gray-400">
+                <Mail className="h-4 w-4 text-white" />
                 <a
                   href="mailto:contact@fullstack-starter.com"
-                  className="hover:text-teal-400 transition-colors"
+                  className="hover:text-white transition-colors"
                 >
                   contact@fullstack-starter.com
                 </a>
               </div>
-              <div className="flex items-center gap-3 text-slate-300">
-                <Phone className="h-4 w-4 text-teal-400" />
+              <div className="flex items-center gap-3 text-gray-400">
+                <Phone className="h-4 w-4 text-white" />
                 <a
                   href="tel:+48123456789"
-                  className="hover:text-teal-400 transition-colors"
+                  className="hover:text-white transition-colors"
                 >
                   +48 123 456 789
                 </a>
               </div>
-              <div className="flex items-center gap-3 text-slate-300">
-                <MapPin className="h-4 w-4 text-teal-400" />
+              <div className="flex items-center gap-3 text-gray-400">
+                <MapPin className="h-4 w-4 text-white" />
                 <a
                   href="https://maps.google.com/?q=Cracow, Poland"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-teal-400 transition-colors"
+                  className="hover:text-white transition-colors"
                 >
                   Cracow, Poland
                 </a>
@@ -59,7 +59,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="text-slate-300 hover:text-teal-400 transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
                   <Facebook className="h-5 w-5" />
                 </a>
@@ -68,7 +68,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="text-slate-300 hover:text-teal-400 transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
                   <Instagram className="h-5 w-5" />
                 </a>
@@ -78,10 +78,10 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-slate-700 mt-10 pt-6 text-center">
-        <div className="flex items-center justify-center gap-2 text-slate-300 text-sm">
+      <div className="border-t border-gray-800 mt-10 pt-6 text-center px-4">
+        <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
           <span>© 2025 Fullstack Starter. All rights reserved.</span>
-          <Heart className="h-4 w-4 text-teal-400" />
+          <Heart className="h-4 w-4 text-white" />
         </div>
       </div>
     </footer>

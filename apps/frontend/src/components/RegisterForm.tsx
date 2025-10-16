@@ -80,7 +80,7 @@ export default function RegisterForm({ onSuccess }: Props) {
                 <FormControl>
                   <Input
                     placeholder="name@domain.com"
-                    className="h-11 border-gray-200 focus:border-teal-500 focus:ring-teal-500/20 placeholder:text-gray-400"
+                    className="h-11 border-gray-200 focus:border-black focus:ring-black/10 placeholder:text-gray-400"
                     {...field}
                   />
                 </FormControl>
@@ -116,7 +116,7 @@ export default function RegisterForm({ onSuccess }: Props) {
                     <Input
                       placeholder="Minimum 8 characters"
                       type={showPassword ? 'text' : 'password'}
-                      className="h-11 border-gray-200 focus:border-teal-500 focus:ring-teal-500/20 placeholder:text-gray-400"
+                      className="h-11 border-gray-200 focus:border-black focus:ring-black/10 placeholder:text-gray-400"
                       {...field}
                     />
                     <Button
@@ -147,7 +147,7 @@ export default function RegisterForm({ onSuccess }: Props) {
                     <Input
                       placeholder="Repeat password"
                       type={showPasswordConfirmation ? 'text' : 'password'}
-                      className="h-11 border-gray-200 focus:border-teal-500 focus:ring-teal-500/20 placeholder:text-gray-400"
+                      className="h-11 border-gray-200 focus:border-black focus:ring-black/10 placeholder:text-gray-400"
                       {...field}
                     />
                     <Button
@@ -169,7 +169,7 @@ export default function RegisterForm({ onSuccess }: Props) {
 
           <Button
             type="submit"
-            className="w-full h-11 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:text-gray-500 font-medium transition-all duration-200 shadow-sm hover:shadow-md mt-6"
+            className="w-full h-11 bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 font-medium transition-all duration-200 shadow-sm hover:shadow-md mt-6"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? 'Signing up...' : 'Sign Up'}
