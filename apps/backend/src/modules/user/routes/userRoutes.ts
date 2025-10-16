@@ -1,6 +1,9 @@
 import { Type, type Static, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { createAuthenticationMiddleware, createAuthorizationMiddleware } from '../../../common/auth/authMiddleware.ts';
+import {
+  createAuthenticationMiddleware,
+  createParamsAuthorizationMiddleware,
+} from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
@@ -69,7 +72,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   const logoutUserAction = new LogoutUserAction(blacklistTokenRepository, config, tokenService);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
-  const authorizationMiddleware = createAuthorizationMiddleware();
+  const authorizationMiddleware = createParamsAuthorizationMiddleware();
 
   fastify.post('/users/register', {
     schema: {
@@ -150,10 +153,10 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
-  fastify.delete('/users/:id', {
+  fastify.delete('/users/:userId', {
     schema: {
       params: Type.Object({
-        id: Type.String({ format: 'uuid' }),
+        userId: Type.String({ format: 'uuid' }),
       }),
       response: {
         204: Type.Null(),
@@ -161,9 +164,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware, authorizationMiddleware],
     handler: async (request, reply) => {
-      const { id } = request.params;
+      const { userId } = request.params;
 
-      await deleteUserAction.execute(id);
+      await deleteUserAction.execute(userId);
 
       return reply.status(204).send();
     },

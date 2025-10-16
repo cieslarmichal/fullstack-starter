@@ -5,15 +5,10 @@ import { UnauthorizedAccessError } from '../errors/unathorizedAccessError.ts';
 
 import type { TokenService } from './tokenService.ts';
 
-export interface AuthenticatedRequest extends FastifyRequest {
-  user?: {
-    userId: string;
-    email: string;
-  };
-}
+export type AuthMiddleware = (request: FastifyRequest, _reply: FastifyReply) => Promise<void>;
 
-export function createAuthenticationMiddleware(tokenService: TokenService) {
-  return async function (request: AuthenticatedRequest, _reply: FastifyReply): Promise<void> {
+export function createAuthenticationMiddleware(tokenService: TokenService): AuthMiddleware {
+  return async function (request: FastifyRequest, _reply: FastifyReply): Promise<void> {
     const authorizationHeader = request.headers.authorization;
 
     if (!authorizationHeader) {
@@ -39,32 +34,20 @@ export function createAuthenticationMiddleware(tokenService: TokenService) {
   };
 }
 
-export function createAuthorizationMiddleware() {
-  return async function (request: AuthenticatedRequest, _reply: FastifyReply): Promise<void> {
+export function createParamsAuthorizationMiddleware(): AuthMiddleware {
+  return async function (request: FastifyRequest, _reply: FastifyReply): Promise<void> {
     if (!request.user) {
       throw new UnauthorizedAccessError({
         reason: 'User not authenticated',
       });
     }
 
-    const userIdFromParams = (request.params as { id: string }).id;
-    const userIdFromQuery = (request.query as { userId: string }).userId;
+    const userIdFromParams = (request.params as { userId: string }).userId;
+    const userIdFromToken = request.user.userId;
 
-    const currentUserId = request.user.userId;
-
-    if (userIdFromParams && currentUserId !== userIdFromParams) {
+    if (userIdFromParams !== userIdFromToken) {
       throw new ForbiddenAccessError({
-        reason: 'You can only modify your own user data',
-        userId: currentUserId,
-        targetUserId: userIdFromParams,
-      });
-    }
-
-    if (userIdFromQuery && currentUserId !== userIdFromQuery) {
-      throw new ForbiddenAccessError({
-        reason: 'You can only access your own user data',
-        userId: currentUserId,
-        targetUserId: userIdFromQuery,
+        reason: 'The user id does not match the user id from the token.',
       });
     }
   };
