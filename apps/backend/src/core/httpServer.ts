@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyHelmet from '@fastify/helmet';
@@ -86,7 +85,15 @@ export class HttpServer {
       return (data): string => JSON.stringify(data);
     });
 
-    this.addRequestPreprocessing();
+    this.fastifyServer.addHook('preHandler', async (request) => {
+      if (
+        request.body &&
+        typeof request.body === 'object' &&
+        request.headers['content-type']?.includes('application/json')
+      ) {
+        request.body = this.deepTrim(request.body);
+      }
+    });
 
     await this.registerRoutes();
 
@@ -200,28 +207,6 @@ export class HttpServer {
     });
   }
 
-  private addRequestPreprocessing(): void {
-    this.fastifyServer.addHook('preValidation', (request, _reply, next) => {
-      const body = request.body as Record<string, unknown>;
-
-      this.trimStringProperties(body);
-
-      next();
-    });
-  }
-
-  private trimStringProperties(obj: Record<string, any>): void {
-    for (const key in obj) {
-      if (typeof obj[key] === 'string') {
-        obj[key] = obj[key].trim();
-      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-        if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-          this.trimStringProperties(obj[key] as Record<string, any>);
-        }
-      }
-    }
-  }
-
   private async registerRoutes(): Promise<void> {
     const tokenService = new TokenService(this.config);
 
@@ -235,5 +220,27 @@ export class HttpServer {
     this.fastifyServer.get('/health', async (_request, reply) => {
       reply.send({ healthy: true });
     });
+  }
+
+  private deepTrim(obj: unknown): unknown {
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepTrim(item));
+    }
+
+    if (obj && typeof obj === 'object') {
+      const trimmedObj: Record<string, unknown> = {};
+
+      for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+        trimmedObj[key] = this.deepTrim(value);
+      }
+
+      return trimmedObj;
+    }
+
+    if (typeof obj === 'string') {
+      return obj.trim();
+    }
+
+    return obj;
   }
 }
