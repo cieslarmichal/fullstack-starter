@@ -51,7 +51,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     config: {
       httpOnly: true,
       secure: appEnvironment !== 'development',
-      sameSite: appEnvironment === 'production' ? ('none' as const) : ('strict' as const),
+      sameSite: appEnvironment === 'production' ? ('strict' as const) : ('none' as const),
       path: '/',
       maxAge: config.token.refresh.expiresIn,
     },
