@@ -11,6 +11,7 @@ import { loginUser } from '../api/queries/login';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { ApiError } from '../api/ApiError';
 
 const formSchema = z.object({
   email: z.string().email().max(64),
@@ -37,9 +38,42 @@ export default function LoginForm() {
       await loginUser({ email: values.email, password: values.password });
 
       navigate('/');
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.isErrorType('TooManyRequestsError')) {
+          form.setError('root', {
+            message: 'Too many login attempts. Please try again in a few minutes.',
+          });
+          return;
+        }
+
+        if (error.isErrorType('ForbiddenAccessError')) {
+          const reason = error.getContextValue<string>('reason');
+
+          if (reason === 'User email is not verified.') {
+            form.setError('root', {
+              message:
+                'Your account has not been activated yet. Check your email inbox (including spam folder) and click the activation link to complete registration and log in.',
+            });
+            return;
+          }
+        }
+
+        if (error.isErrorType('UnauthorizedAccessError')) {
+          form.setError('root', {
+            message: 'Invalid email address or password',
+          });
+          return;
+        }
+
+        form.setError('root', {
+          message: error.message || 'An error occurred during login',
+        });
+        return;
+      }
+
       form.setError('root', {
-        message: 'Invalid email or password',
+        message: 'Invalid email address or password',
       });
     }
   }

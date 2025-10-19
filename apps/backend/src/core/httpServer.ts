@@ -137,6 +137,20 @@ export class HttpServer {
           message: 'Internal server error',
         });
       }
+
+      if ('statusCode' in error && error.statusCode === 429) {
+        this.loggerService.warn({
+          message: 'Rate limit exceeded',
+          endpoint: `${request.method} ${request.url}`,
+          error: error.message,
+        });
+
+        return reply.status(429).send({
+          name: 'TooManyRequestsError',
+          message: error.message || 'Rate limit exceeded',
+        });
+      }
+
       const serializedError = serializeError(error);
 
       this.loggerService.error({

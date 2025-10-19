@@ -1,11 +1,18 @@
 import { config } from '../config';
 import { refreshToken } from './queries/refreshToken';
+import { ApiError } from './ApiError';
 
 interface ApiRequestConfig {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: unknown;
   params?: URLSearchParams;
   requiresAuth?: boolean;
+}
+
+interface ErrorResponse {
+  name?: string;
+  message?: string;
+  context?: Record<string, unknown>;
 }
 
 let getAccessToken: (() => string | null) | null = null;
@@ -83,7 +90,20 @@ export const apiRequest = async <T>(endpoint: string, options: ApiRequestConfig)
   }
 
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    let errorResponse: ErrorResponse | null = null;
+
+    try {
+      errorResponse = await response.json();
+    } catch {
+      throw new ApiError('NetworkError', response.statusText || 'Request failed', response.status);
+    }
+
+    throw new ApiError(
+      errorResponse?.name || 'UnknownError',
+      errorResponse?.message || response.statusText || 'Request failed',
+      response.status,
+      errorResponse?.context,
+    );
   }
 
   if (response.status === 204) {

@@ -15,7 +15,7 @@
   "rateLimit": {
     "auth": {
       "max": 5,
-      "timeWindow": 900000
+      "timeWindow": 600000
     }
   },
   "token": {
