@@ -90,11 +90,7 @@ export class HttpServer {
 
     await this.fastifyServer.listen({ port, host });
 
-    this.loggerService.info({
-      message: 'HTTP server started.',
-      port,
-      host,
-    });
+    this.loggerService.info({ message: 'HTTP server started.', port, host });
   }
 
   public async stop(): Promise<void> {
@@ -107,15 +103,11 @@ export class HttpServer {
 
     this.isShuttingDown = true;
 
-    this.loggerService.info({
-      message: 'Stopping HTTP server...',
-    });
+    this.loggerService.info({ message: 'Stopping HTTP server...' });
 
     await this.fastifyServer.close();
 
-    this.loggerService.info({
-      message: 'HTTP server stopped.',
-    });
+    this.loggerService.info({ message: 'HTTP server stopped.' });
   }
 
   private setupErrorHandler(): void {

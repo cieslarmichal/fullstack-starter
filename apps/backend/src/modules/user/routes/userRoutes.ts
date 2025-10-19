@@ -5,6 +5,7 @@ import {
   createParamsAuthorizationMiddleware,
 } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
+import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
 import type { Database } from '../../../infrastructure/database/database.ts';
@@ -137,14 +138,15 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     schema: {
       response: {
         200: Type.Object({ accessToken: Type.String() }),
-        401: Type.Null(),
       },
     },
     handler: async (request, reply) => {
       const refreshToken = request.cookies[refreshTokenCookie.name];
 
       if (!refreshToken) {
-        return reply.status(401).send();
+        throw new UnauthorizedAccessError({
+          reason: 'Refresh token cookie not found',
+        });
       }
 
       const result = await refreshTokenAction.execute({ refreshToken });
