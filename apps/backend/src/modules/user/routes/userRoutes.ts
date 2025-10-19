@@ -25,6 +25,8 @@ const userSchema = Type.Object({
   createdAt: Type.String({ format: 'date-time' }),
 });
 
+const appEnvironment = process.env['NODE_ENV'];
+
 export const userRoutes: FastifyPluginAsyncTypebox<{
   database: Database;
   config: Config;
@@ -47,8 +49,8 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     name: 'refresh-token',
     config: {
       httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
-      sameSite: 'strict' as const,
+      secure: appEnvironment !== 'development',
+      sameSite: appEnvironment === 'production' ? ('none' as const) : ('strict' as const),
       path: '/',
       maxAge: config.token.refresh.expiresIn,
     },

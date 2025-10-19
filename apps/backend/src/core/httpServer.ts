@@ -4,7 +4,6 @@ import fastifyCors from '@fastify/cors';
 import fastifyHelmet from '@fastify/helmet';
 import fastifyMultipart from '@fastify/multipart';
 import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import crypto from 'crypto';
 import { fastify, type FastifyInstance } from 'fastify';
 import type { FastifySchemaValidationError } from 'fastify/types/schema.js';
 
@@ -38,8 +37,6 @@ export class HttpServer {
     this.fastifyServer = fastify({
       bodyLimit: 10 * 1024 * 1024,
       logger: false,
-      genReqId: () => crypto.randomUUID(),
-      requestIdLogLabel: 'reqId',
     }).withTypeProvider<TypeBoxTypeProvider>();
   }
 
@@ -48,37 +45,9 @@ export class HttpServer {
 
     this.setupErrorHandler();
 
-    await this.fastifyServer.register(fastifyMultipart, {
-      limits: {
-        fileSize: 1024 * 1024 * 1024 * 4,
-      },
-    });
-
-    await this.fastifyServer.register(fastifyCookie, {
-      secret: this.config.cookie.secret,
-      parseOptions: {
-        httpOnly: true,
-        secure: process.env['NODE_ENV'] === 'production',
-        sameSite: 'strict',
-      },
-    });
-
-    await this.fastifyServer.register(fastifyHelmet, {
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          objectSrc: ["'none'"],
-          fontSrc: ["'self'"],
-        },
-      },
-      frameguard: { action: 'deny' },
-      noSniff: true,
-      xssFilter: true,
-    });
-
+    await this.fastifyServer.register(fastifyMultipart, { limits: { fileSize: 1024 * 1024 * 1024 * 4 } });
+    await this.fastifyServer.register(fastifyCookie, { secret: this.config.cookie.secret });
+    await this.fastifyServer.register(fastifyHelmet);
     await this.fastifyServer.register(fastifyCors, {
       origin: this.config.frontendUrl,
       credentials: true,
@@ -90,7 +59,6 @@ export class HttpServer {
       if (!request.url.includes('/health')) {
         this.loggerService.info({
           message: 'Incoming request...',
-          reqId: request.id,
           req: {
             method: request.method,
             url: request.url,
@@ -104,7 +72,6 @@ export class HttpServer {
       if (!request.url.includes('/health')) {
         this.loggerService.info({
           message: 'Request completed.',
-          reqId: request.id,
           method: request.method,
           url: request.url,
           statusCode: reply.statusCode,
@@ -167,7 +134,6 @@ export class HttpServer {
 
         this.loggerService.error({
           message: 'HTTP request error',
-          reqId: request.id,
           error: serializedError,
           endpoint: `${request.method} ${request.url}`,
         });
@@ -181,7 +147,6 @@ export class HttpServer {
 
       this.loggerService.error({
         message: 'HTTP request error',
-        reqId: request.id,
         error: serializedError,
         endpoint: `${request.method} ${request.url}`,
       });
