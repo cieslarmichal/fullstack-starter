@@ -19,6 +19,7 @@
     "@fastify/cors": "11.1.0",
     "@fastify/helmet": "13.0.2",
     "@fastify/multipart": "9.2.1",
+    "@fastify/rate-limit": "10.3.0",
     "@fastify/type-provider-typebox": "6.0.0",
     "@sinclair/typebox": "0.34.41",
     "bcrypt": "6.0.0",

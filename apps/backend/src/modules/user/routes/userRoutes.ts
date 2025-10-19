@@ -87,6 +87,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
         201: userSchema,
       },
     },
+    config: {
+      rateLimit: config.rateLimit.auth,
+    },
     handler: async (request, reply) => {
       const user = await createUserAction.execute({
         email: request.body.email,
@@ -122,6 +125,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       response: {
         200: Type.Object({ accessToken: Type.String() }),
       },
+    },
+    config: {
+      rateLimit: config.rateLimit.auth,
     },
     handler: async (request, reply) => {
       const { email, password } = request.body;

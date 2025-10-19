@@ -25,6 +25,12 @@ const configSchema = Type.Object({
     host: Type.String({ minLength: 1 }),
     port: Type.Number({ minimum: 1, maximum: 65535 }),
   }),
+  rateLimit: Type.Object({
+    auth: Type.Object({
+      max: Type.Number({ minimum: 1 }),
+      timeWindow: Type.Number({ minimum: 1000 }),
+    }),
+  }),
 });
 
 export type Config = Static<typeof configSchema>;
