@@ -62,8 +62,6 @@ export class RefreshTokenAction {
     const newRefreshToken = this.tokenService.generateRefreshToken(newRefreshPayload);
     const newHash = CryptoService.hashData(newRefreshToken);
 
-    const GRACE_MS = this.config.token.refresh.graceMs;
-
     // Attempt atomic rotate; if it fails, try accept previous within grace
     const locked = await this.userSessionRepository.getByIdForUpdate(sessionId);
     if (!locked || locked.status !== 'active') {
@@ -71,7 +69,11 @@ export class RefreshTokenAction {
     }
 
     if (locked.currentRefreshHash === tokenHash) {
-      await this.userSessionRepository.rotateWithGrace({ sessionId, newRefreshHash: newHash, graceMs: GRACE_MS });
+      await this.userSessionRepository.rotateWithGrace({
+        sessionId,
+        newRefreshHash: newHash,
+        graceMs: this.config.token.refresh.graceMs,
+      });
     } else {
       const accepted = await this.userSessionRepository.acceptPreviousIfWithinGrace({
         sessionId,

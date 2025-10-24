@@ -19,7 +19,9 @@ const configSchema = Type.Object({
     refresh: Type.Object({
       secret: Type.String({ minLength: 1 }),
       expiresIn: Type.Number({ minimum: 86400 }),
-      graceMs: Type.Number({ minimum: 1000, maximum: 5000 }),
+      graceMs: Type.Number({ minimum: 1000, maximum: 10000 }),
+      // Short client/API idempotency window for coalescing duplicate refresh requests
+      idempotencyMs: Type.Number({ minimum: 100, maximum: 5000 }),
     }),
   }),
   server: Type.Object({

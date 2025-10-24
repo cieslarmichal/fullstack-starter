@@ -26,7 +26,8 @@
     "refresh": {
       "secret": null,
       "expiresIn": 604800,
-      "graceMs": 5000
+      "graceMs": 10000,
+      "idempotencyMs": 3000
     }
   }
 }
