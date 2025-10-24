@@ -4,3 +4,7 @@ export interface TokenPayload {
   readonly iat?: number; // issued at
   readonly exp?: number; // expiration time
 }
+
+export interface RefreshTokenPayload extends TokenPayload {
+  readonly sessionId: string;
+}

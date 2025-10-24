@@ -1,6 +1,5 @@
 import { config } from '../config';
 import { refreshToken } from './queries/refreshToken';
-import { ApiError } from './ApiError';
 
 interface ApiRequestConfig {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -9,14 +8,9 @@ interface ApiRequestConfig {
   requiresAuth?: boolean;
 }
 
-interface ErrorResponse {
-  name?: string;
-  message?: string;
-  context?: Record<string, unknown>;
-}
-
 let getAccessToken: (() => string | null) | null = null;
 let onTokenRefresh: ((newToken: string) => void) | null = null;
+// Global single-flight promise to serialize refresh calls across the app
 let refreshPromise: Promise<{ accessToken: string }> | null = null;
 
 export const setAccessTokenGetter = (getter: () => string | null) => {
@@ -25,6 +19,29 @@ export const setAccessTokenGetter = (getter: () => string | null) => {
 
 export const setTokenRefreshCallback = (callback: (newToken: string) => void) => {
   onTokenRefresh = callback;
+};
+
+// Public helper to request an access token refresh in a single-flight manner
+// Ensures concurrent callers share the same promise and only one network call is made
+export const requestAccessTokenRefresh = async (): Promise<{ accessToken: string }> => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    const res = await refreshToken();
+    if (onTokenRefresh) {
+      onTokenRefresh(res.accessToken);
+    }
+    return res;
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    // Clear so future requests can initiate a new refresh when needed
+    refreshPromise = null;
+  }
 };
 
 export const apiRequest = async <T>(endpoint: string, options: ApiRequestConfig): Promise<T> => {
@@ -60,50 +77,17 @@ export const apiRequest = async <T>(endpoint: string, options: ApiRequestConfig)
   const accessToken = requiresAuth && getAccessToken ? getAccessToken() : undefined;
   let response = await makeRequest(accessToken || undefined);
 
-  if (!response.ok && response.status === 401 && endpoint !== '/users/login') {
+  if (!response.ok && response.status === 401 && endpoint !== '/users/login' && requiresAuth) {
     try {
-      // If there's already a refresh in progress, wait for it
-      if (refreshPromise) {
-        const refreshResponse = await refreshPromise;
-        response = await makeRequest(refreshResponse.accessToken);
-      } else {
-        // Start a new refresh and share it with concurrent requests
-        refreshPromise = refreshToken();
-
-        try {
-          const refreshResponse = await refreshPromise;
-
-          if (onTokenRefresh) {
-            onTokenRefresh(refreshResponse.accessToken);
-          }
-
-          response = await makeRequest(refreshResponse.accessToken);
-        } finally {
-          // Clear the refresh promise so future requests can start new refresh if needed
-          refreshPromise = null;
-        }
-      }
+      const refreshResponse = await requestAccessTokenRefresh();
+      response = await makeRequest(refreshResponse.accessToken);
     } catch (refreshError) {
-      refreshPromise = null;
-      throw new Error(`Authentication failed: ${refreshError}`);
+      throw new Error(`Authentication failed: ${String(refreshError)}`);
     }
   }
 
   if (!response.ok) {
-    let errorResponse: ErrorResponse | null = null;
-
-    try {
-      errorResponse = await response.json();
-    } catch {
-      throw new ApiError('NetworkError', response.statusText || 'Request failed', response.status);
-    }
-
-    throw new ApiError(
-      errorResponse?.name || 'UnknownError',
-      errorResponse?.message || response.statusText || 'Request failed',
-      response.status,
-      errorResponse?.context,
-    );
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
 
   if (response.status === 204) {

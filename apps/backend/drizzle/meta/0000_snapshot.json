@@ -1,11 +1,11 @@
 {
-  "id": "751f11a8-b4d9-419c-9971-47ff3e2adbd8",
+  "id": "7a0361fd-7c4d-45e5-b62e-33e7d6915cbe",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.blacklisted_tokens": {
-      "name": "blacklisted_tokens",
+    "public.user_sessions": {
+      "name": "user_sessions",
       "schema": "",
       "columns": {
         "id": {
@@ -20,24 +20,89 @@
           "primaryKey": false,
           "notNull": true
         },
-        "token_hash": {
-          "name": "token_hash",
+        "current_refresh_hash": {
+          "name": "current_refresh_hash",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "expires_at": {
-          "name": "expires_at",
+        "prev_refresh_hash": {
+          "name": "prev_refresh_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prev_usable_until": {
+          "name": "prev_usable_until",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "last_rotated_at": {
+          "name": "last_rotated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_user_sessions_user_id": {
+          "name": "idx_user_sessions_user_id",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_user_sessions_prev_refresh_hash": {
+          "name": "idx_user_sessions_prev_refresh_hash",
+          "columns": [
+            {
+              "expression": "prev_refresh_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "blacklisted_tokens_user_id_users_id_fk": {
-          "name": "blacklisted_tokens_user_id_users_id_fk",
-          "tableFrom": "blacklisted_tokens",
+        "user_sessions_user_id_users_id_fk": {
+          "name": "user_sessions_user_id_users_id_fk",
+          "tableFrom": "user_sessions",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -50,7 +115,15 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "user_sessions_current_refresh_hash_unique": {
+          "name": "user_sessions_current_refresh_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "current_refresh_hash"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

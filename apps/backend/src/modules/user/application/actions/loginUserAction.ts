@@ -1,7 +1,10 @@
 import type { TokenService } from '../../../../common/auth/tokenService.ts';
+import { CryptoService } from '../../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
+import { UuidService } from '../../../../common/uuid/uuidService.ts';
 import type { UserRepository } from '../../domain/repositories/userRepository.ts';
+import type { UserSessionRepository } from '../../domain/repositories/userSessionRepository.ts';
 import type { PasswordService } from '../services/passwordService.ts';
 
 interface LoginData {
@@ -19,17 +22,20 @@ export class LoginUserAction {
   private readonly loggerService: LoggerService;
   private readonly tokenService: TokenService;
   private readonly passwordService: PasswordService;
+  private readonly userSessionRepository: UserSessionRepository;
 
   public constructor(
     userRepository: UserRepository,
     loggerService: LoggerService,
     tokenService: TokenService,
     passwordService: PasswordService,
+    userSessionRepository: UserSessionRepository,
   ) {
     this.userRepository = userRepository;
     this.loggerService = loggerService;
     this.tokenService = tokenService;
     this.passwordService = passwordService;
+    this.userSessionRepository = userSessionRepository;
   }
 
   public async execute(loginData: LoginData): Promise<LoginResult> {
@@ -58,10 +64,15 @@ export class LoginUserAction {
       });
     }
 
-    const payload = { userId: user.id, email: user.email };
+    const sessionId = UuidService.generateUuid();
+    const accessPayload = { userId: user.id, email: user.email };
+    const refreshPayload = { userId: user.id, email: user.email, sessionId };
 
-    const accessToken = this.tokenService.generateAccessToken(payload);
-    const refreshToken = this.tokenService.generateRefreshToken(payload);
+    const accessToken = this.tokenService.generateAccessToken(accessPayload);
+    const refreshToken = this.tokenService.generateRefreshToken(refreshPayload);
+
+    const tokenHash = CryptoService.hashData(refreshToken);
+    await this.userSessionRepository.create({ id: sessionId, userId: user.id, currentRefreshHash: tokenHash });
 
     this.loggerService.info({
       message: 'User logged in successfully',

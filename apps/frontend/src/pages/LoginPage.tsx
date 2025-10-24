@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
+import { Button } from '../components/ui/Button';
 
 export default function LoginPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -71,12 +72,14 @@ export default function LoginPage() {
                   Your account has been created successfully. You can now sign in with your credentials.
                 </p>
               </div>
-              <button
+              <Button
                 onClick={handleBackToLogin}
-                className="w-full h-11 bg-black hover:bg-gray-800 text-white font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                variant="default"
+                size="lg"
+                className="w-full h-11 rounded-lg shadow-sm hover:shadow-md"
               >
                 Back to Sign In
-              </button>
+              </Button>
             </div>
           ),
         };
@@ -104,26 +107,22 @@ export default function LoginPage() {
         {!isRegistrationSuccess && (
           <div className="flex justify-center">
             <div className="bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm">
-              <button
-                className={`px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
-                  activeTab === 'login'
-                    ? 'bg-black text-white shadow-sm'
-                    : 'text-gray-600 hover:text-black hover:bg-gray-50'
-                }`}
+              <Button
+                variant={activeTab === 'login' ? 'default' : 'ghost'}
+                size="sm"
+                className="px-6 py-3 text-sm font-semibold rounded-lg"
                 onClick={() => handleTabChange('login')}
               >
                 Sign In
-              </button>
-              <button
-                className={`px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
-                  activeTab === 'register'
-                    ? 'bg-black text-white shadow-sm'
-                    : 'text-gray-600 hover:text-black hover:bg-gray-50'
-                }`}
+              </Button>
+              <Button
+                variant={activeTab === 'register' ? 'default' : 'ghost'}
+                size="sm"
+                className="px-6 py-3 text-sm font-semibold rounded-lg"
                 onClick={() => handleTabChange('register')}
               >
                 Sign Up
-              </button>
+              </Button>
             </div>
           </div>
         )}

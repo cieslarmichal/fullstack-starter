@@ -4,9 +4,10 @@ import { AuthContext } from '../context/AuthContext';
 import { LogOut } from 'lucide-react';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@/components/ui/Menubar';
 import { Button } from './ui/Button';
+import { Skeleton } from './ui/Skeleton';
 
 export default function Header() {
-  const { userData } = useContext(AuthContext);
+  const { userData, userDataInitialized } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const initial = (userData?.email?.[0] || 'U').toUpperCase();
@@ -29,7 +30,12 @@ export default function Header() {
         </div>
 
         <div className="flex-1 flex items-center justify-end">
-          {userData ? (
+          {!userDataInitialized ? (
+            <div className="flex items-center gap-2 lg:gap-3">
+              {/* Gentle avatar placeholder while auth initializes */}
+              <Skeleton className="h-10 w-10 rounded-full bg-muted" />
+            </div>
+          ) : userData ? (
             <div className="min-w-[120px] flex justify-end">
               <Menubar className="rounded-none space-x-0 border-none data-[state=open]:!bg-none">
                 <MenubarMenu>

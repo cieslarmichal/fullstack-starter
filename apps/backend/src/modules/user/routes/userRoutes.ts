@@ -5,6 +5,7 @@ import {
   createParamsAuthorizationMiddleware,
 } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
+import { CryptoService } from '../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
@@ -17,8 +18,8 @@ import { LogoutUserAction } from '../application/actions/logoutUserAction.ts';
 import { RefreshTokenAction } from '../application/actions/refreshTokenAction.ts';
 import { PasswordService } from '../application/services/passwordService.ts';
 import type { User } from '../domain/types/user.ts';
-import { BlacklistTokenRepositoryImpl } from '../infrastructure/repositories/blacklistTokenRepositoryImpl.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
+import { UserSessionRepositoryImpl } from '../infrastructure/repositories/userSessionRepositoryImpl.ts';
 
 const userSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
@@ -35,6 +36,14 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   tokenService: TokenService;
 }> = async function (fastify, opts) {
   const { config, database, loggerService, tokenService } = opts;
+
+  // Idempotency window and single-flight coordination for refresh calls
+  // Keyed by refresh token hash to avoid storing sensitive data.
+  const inFlightRefreshes = new Map<string, Promise<{ accessToken: string; refreshToken: string }>>();
+  const recentRefreshes = new Map<
+    string,
+    { result: { accessToken: string; refreshToken: string }; timestamp: number }
+  >();
 
   const mapUserToResponse = (user: User): Static<typeof userSchema> => {
     const userResponse: Static<typeof userSchema> = {
@@ -58,21 +67,27 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   };
 
   const userRepository = new UserRepositoryImpl(database);
-  const blacklistTokenRepository = new BlacklistTokenRepositoryImpl(database);
+  const userSessionRepository = new UserSessionRepositoryImpl(database);
   const passwordService = new PasswordService(config);
 
   const createUserAction = new CreateUserAction(userRepository, loggerService, passwordService);
   const findUserAction = new FindUserAction(userRepository);
   const deleteUserAction = new DeleteUserAction(userRepository, loggerService);
-  const loginUserAction = new LoginUserAction(userRepository, loggerService, tokenService, passwordService);
-  const refreshTokenAction = new RefreshTokenAction(
+  const loginUserAction = new LoginUserAction(
     userRepository,
-    blacklistTokenRepository,
-    config,
     loggerService,
     tokenService,
+    passwordService,
+    userSessionRepository,
   );
-  const logoutUserAction = new LogoutUserAction(blacklistTokenRepository, config, tokenService);
+  const refreshTokenAction = new RefreshTokenAction(
+    userRepository,
+    userSessionRepository,
+    loggerService,
+    tokenService,
+    config,
+  );
+  const logoutUserAction = new LogoutUserAction(userSessionRepository, tokenService);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
   const authorizationMiddleware = createParamsAuthorizationMiddleware();
@@ -140,6 +155,23 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
+  fastify.post('/users/logout', {
+    schema: {
+      response: {
+        204: Type.Null(),
+      },
+    },
+    handler: async (request, reply) => {
+      const refreshToken = request.cookies[refreshTokenCookie.name];
+
+      await logoutUserAction.execute({ refreshToken });
+
+      reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
+
+      return reply.status(204).send();
+    },
+  });
+
   fastify.post('/users/refresh-token', {
     schema: {
       response: {
@@ -155,10 +187,41 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
         });
       }
 
-      const result = await refreshTokenAction.execute({ refreshToken });
+      const tokenHash = CryptoService.hashData(refreshToken);
+
+      // Short-circuit for very recent duplicate refresh attempts (e.g., rapid page reloads)
+      const recent = recentRefreshes.get(tokenHash);
+      const now = Date.now();
+      if (recent && now - recent.timestamp <= config.token.refresh.graceMs) {
+        reply.setCookie(refreshTokenCookie.name, recent.result.refreshToken, refreshTokenCookie.config);
+        return reply.send({ accessToken: recent.result.accessToken });
+      }
+
+      // Ensure single-flight per tokenHash
+      let promise = inFlightRefreshes.get(tokenHash);
+      if (!promise) {
+        promise = refreshTokenAction.execute({ refreshToken });
+        inFlightRefreshes.set(tokenHash, promise);
+      }
+
+      let result: { accessToken: string; refreshToken: string };
+      try {
+        result = await promise;
+
+        // Cache result briefly for idempotency window
+        recentRefreshes.set(tokenHash, { result, timestamp: now });
+
+        // Opportunistic cleanup of stale recent entries
+        for (const [key, entry] of recentRefreshes) {
+          if (now - entry.timestamp > config.token.refresh.graceMs) {
+            recentRefreshes.delete(key);
+          }
+        }
+      } finally {
+        inFlightRefreshes.delete(tokenHash);
+      }
 
       reply.setCookie(refreshTokenCookie.name, result.refreshToken, refreshTokenCookie.config);
-
       return reply.send({ accessToken: result.accessToken });
     },
   });
@@ -177,23 +240,6 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       const { userId } = request.params;
 
       await deleteUserAction.execute(userId);
-
-      return reply.status(204).send();
-    },
-  });
-
-  fastify.post('/users/logout', {
-    schema: {
-      response: {
-        204: Type.Null(),
-      },
-    },
-    handler: async (request, reply) => {
-      const refreshToken = request.cookies[refreshTokenCookie.name];
-
-      await logoutUserAction.execute({ refreshToken });
-
-      reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
 
       return reply.status(204).send();
     },

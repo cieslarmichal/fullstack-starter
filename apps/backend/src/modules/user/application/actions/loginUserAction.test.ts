@@ -6,8 +6,9 @@ import { UnauthorizedAccessError } from '../../../../common/errors/unathorizedAc
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import { createConfig, type Config } from '../../../../core/config.ts';
 import { Database } from '../../../../infrastructure/database/database.ts';
-import { users } from '../../../../infrastructure/database/schema.ts';
+import { userSessions, users } from '../../../../infrastructure/database/schema.ts';
 import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
+import { UserSessionRepositoryImpl } from '../../infrastructure/repositories/userSessionRepositoryImpl.ts';
 import { PasswordService } from '../services/passwordService.ts';
 
 import { LoginUserAction } from './loginUserAction.ts';
@@ -20,11 +21,13 @@ describe('LoginUserAction', () => {
   let tokenService: TokenService;
   let passwordService: PasswordService;
   let config: Config;
+  let userSessionRepository: UserSessionRepositoryImpl;
 
   beforeEach(async () => {
     config = createConfig();
     database = new Database({ url: config.database.url });
     userRepository = new UserRepositoryImpl(database);
+    userSessionRepository = new UserSessionRepositoryImpl(database);
     tokenService = new TokenService(config);
     passwordService = new PasswordService(config);
 
@@ -35,11 +38,19 @@ describe('LoginUserAction', () => {
       error: () => {},
     } as unknown as LoggerService;
 
-    loginUserAction = new LoginUserAction(userRepository, loggerService, tokenService, passwordService);
+    loginUserAction = new LoginUserAction(
+      userRepository,
+      loggerService,
+      tokenService,
+      passwordService,
+      userSessionRepository,
+    );
 
+    await database.db.delete(userSessions);
     await database.db.delete(users);
   });
   afterEach(async () => {
+    await database.db.delete(userSessions);
     await database.db.delete(users);
     await database.close();
   });
