@@ -22,8 +22,5 @@ export const userSessions = pgTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
-  (table) => [
-    index('idx_user_sessions_user_id').on(table.userId),
-    index('idx_user_sessions_prev_refresh_hash').on(table.prevRefreshHash),
-  ],
+  (table) => [index('idx_user_sessions_user_id').on(table.userId)],
 );
