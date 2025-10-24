@@ -4,7 +4,7 @@ import fastifyHelmet from '@fastify/helmet';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyRateLimit from '@fastify/rate-limit';
 import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { fastify, type FastifyInstance } from 'fastify';
+import { fastify, type FastifyInstance, type FastifyRequest } from 'fastify';
 import type { FastifySchemaValidationError } from 'fastify/types/schema.js';
 
 import { TokenService } from '../common/auth/tokenService.ts';
@@ -56,27 +56,46 @@ export class HttpServer {
     await this.fastifyServer.register(fastifyMultipart, { limits: { fileSize: 1024 * 1024 * 1024 * 4 } });
     await this.fastifyServer.register(fastifyRateLimit, { global: false });
 
+    const skipRequestLog = (request: FastifyRequest): boolean => {
+      const isOptions = request.method === 'OPTIONS';
+      const isHealth = request.url.includes('/health');
+      return isOptions || isHealth;
+    };
+
     this.fastifyServer.addHook('onRequest', (request, _reply, done) => {
-      if (!request.url.includes('/health')) {
-        this.loggerService.info({
-          message: 'Incoming request...',
-          req: {
-            method: request.method,
-            url: request.url,
-          },
-        });
+      if (skipRequestLog(request)) {
+        done();
+        return;
       }
+
+      this.loggerService.debug({
+        message: 'Incoming request',
+        method: request.method,
+        url: request.url,
+      });
+
       done();
     });
 
-    this.fastifyServer.addHook('onSend', (request, reply, _payload, done) => {
-      if (!request.url.includes('/health')) {
-        this.loggerService.info({
-          message: 'Request completed.',
-          method: request.method,
-          url: request.url,
-          statusCode: reply.statusCode,
-        });
+    this.fastifyServer.addHook('onResponse', (request, reply, done) => {
+      if (skipRequestLog(request)) {
+        done();
+        return;
+      }
+
+      const payload = {
+        message: 'Request completed',
+        method: request.method,
+        url: request.url,
+        statusCode: reply.statusCode,
+      };
+
+      if (reply.statusCode >= 500) {
+        this.loggerService.error(payload);
+      } else if (reply.statusCode >= 400) {
+        this.loggerService.warn(payload);
+      } else {
+        this.loggerService.info(payload);
       }
       done();
     });
