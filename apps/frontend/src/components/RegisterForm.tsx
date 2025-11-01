@@ -76,11 +76,12 @@ export default function RegisterForm({ onSuccess }: Props) {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700">Email</FormLabel>
+                <FormLabel htmlFor="email">Email</FormLabel>
                 <FormControl>
                   <Input
+                    id="email"
                     placeholder="name@domain.com"
-                    className="h-11 border-gray-200 focus:border-black focus:ring-black/10 placeholder:text-gray-400"
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -92,13 +93,13 @@ export default function RegisterForm({ onSuccess }: Props) {
           <FormField
             control={form.control}
             name="password"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
                 <div className="flex items-center gap-2">
-                  <FormLabel className="text-sm font-medium text-gray-700">Password</FormLabel>
+                  <FormLabel htmlFor="password">Password</FormLabel>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <InfoIcon className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
+                      <InfoIcon className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent
                       side="top"
@@ -111,26 +112,29 @@ export default function RegisterForm({ onSuccess }: Props) {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <FormControl>
-                  <div className="relative">
+                <div className="relative">
+                  <FormControl>
                     <Input
+                      id="password"
                       placeholder="Minimum 8 characters"
                       type={showPassword ? 'text' : 'password'}
-                      className="h-11 border-gray-200 focus:border-black focus:ring-black/10 placeholder:text-gray-400"
+                      className="h-11"
+                      aria-invalid={!!fieldState.error}
                       {...field}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400"
-                      onClick={() => setShowPassword(!showPassword)}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </FormControl>
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -139,29 +143,32 @@ export default function RegisterForm({ onSuccess }: Props) {
           <FormField
             control={form.control}
             name="passwordConfirmation"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700">Confirm Password</FormLabel>
-                <FormControl>
-                  <div className="relative">
+                <FormLabel htmlFor="passwordConfirmation">Repeat Password</FormLabel>
+                <div className="relative">
+                  <FormControl>
                     <Input
+                      id="passwordConfirmation"
                       placeholder="Repeat password"
                       type={showPasswordConfirmation ? 'text' : 'password'}
-                      className="h-11 border-gray-200 focus:border-black focus:ring-black/10 placeholder:text-gray-400"
+                      className="h-11"
+                      aria-invalid={!!fieldState.error}
                       {...field}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400"
-                      onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
-                      tabIndex={-1}
-                    >
-                      {showPasswordConfirmation ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </FormControl>
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                    onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                    tabIndex={-1}
+                    aria-label={showPasswordConfirmation ? 'Hide password' : 'Show password'}
+                  >
+                    {showPasswordConfirmation ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -169,15 +176,16 @@ export default function RegisterForm({ onSuccess }: Props) {
 
           <Button
             type="submit"
-            className="w-full h-11 bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 font-medium transition-all duration-200 shadow-sm hover:shadow-md mt-6"
+            className="w-full h-11 font-medium transition-all duration-200 shadow-sm hover:shadow-md mt-6"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
+            data-testid="register-submit-button"
           >
             {form.formState.isSubmitting ? 'Signing up...' : 'Sign Up'}
           </Button>
         </form>
       </Form>
       {form.formState.errors.root && (
-        <div className="text-red-600 text-sm mt-3 text-center bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="text-destructive text-sm mt-3 text-center bg-destructive/10 border border-destructive/20 rounded-lg p-3">
           {form.formState.errors.root.message}
         </div>
       )}

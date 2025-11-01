@@ -77,6 +77,7 @@ export default function LoginPage() {
                 variant="default"
                 size="lg"
                 className="w-full h-11 rounded-lg shadow-sm hover:shadow-md"
+                data-testid="back-to-sign-in-button"
               >
                 Back to Sign In
               </Button>
@@ -112,6 +113,7 @@ export default function LoginPage() {
                 size="sm"
                 className="px-6 py-3 text-sm font-semibold rounded-lg"
                 onClick={() => handleTabChange('login')}
+                data-testid="login-tab-button"
               >
                 Sign In
               </Button>
@@ -120,6 +122,7 @@ export default function LoginPage() {
                 size="sm"
                 className="px-6 py-3 text-sm font-semibold rounded-lg"
                 onClick={() => handleTabChange('register')}
+                data-testid="register-tab-button"
               >
                 Sign Up
               </Button>

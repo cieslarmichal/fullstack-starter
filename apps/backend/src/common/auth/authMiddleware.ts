@@ -1,6 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
-import { ForbiddenAccessError } from '../errors/forbiddenAccessError.ts';
 import { UnauthorizedAccessError } from '../errors/unathorizedAccessError.ts';
 
 import type { TokenService } from './tokenService.ts';
@@ -31,24 +30,5 @@ export function createAuthenticationMiddleware(tokenService: TokenService): Auth
       userId: tokenPayload.userId,
       email: tokenPayload.email,
     };
-  };
-}
-
-export function createParamsAuthorizationMiddleware(): AuthMiddleware {
-  return async function (request: FastifyRequest, _reply: FastifyReply): Promise<void> {
-    if (!request.user) {
-      throw new UnauthorizedAccessError({
-        reason: 'User not authenticated',
-      });
-    }
-
-    const userIdFromParams = (request.params as { userId: string }).userId;
-    const userIdFromToken = request.user.userId;
-
-    if (userIdFromParams !== userIdFromToken) {
-      throw new ForbiddenAccessError({
-        reason: 'The user id does not match the user id from the token.',
-      });
-    }
   };
 }

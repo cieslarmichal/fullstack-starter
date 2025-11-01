@@ -9,7 +9,8 @@
 - **CI/CD**: GitHub Actions for continuous integration and deployment to Fly.io.
 - **Monorepo Management**: Using Turborepo for efficient monorepo management.
 - **Testing**: Vitest for automated testing for backend and frontend.
-- **User module**: Basic pages for login and sign up integrated with backend.
+- **Playwright E2E tests**: End-to-end testing setup with Playwright.
+- **User module**: Basic pages for login and sign up with session management integrated with backend.
 
 ## Getting Started
 
@@ -52,12 +53,12 @@
    npm run test
    ```
 
-6. Run database migrations (if you ran tests before, you can skip this step because the test setup already runs migrations):
+6. Run database migrations
 
    ```bash
    cd apps/backend
-   export DATABASE_URL=postgres://postgres:postgres@localhost:5432/fullstack-starter
-   npm run db:push
+   export DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
+   npm run db:migrate
    ```
 
 7. Start frontend app (in a new terminal):

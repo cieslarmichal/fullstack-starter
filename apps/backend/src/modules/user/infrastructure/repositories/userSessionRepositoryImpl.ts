@@ -22,21 +22,26 @@ export class UserSessionRepositoryImpl implements UserSessionRepository {
     const id = data.id ?? UuidService.generateUuid();
     const now = new Date();
 
-    await this.database.db.insert(userSessions).values({
-      id,
-      userId: data.userId,
-      currentRefreshHash: data.currentRefreshHash,
-      prevRefreshHash: null,
-      prevUsableUntil: null,
-      lastRotatedAt: now,
-      status: 'active',
-    });
+    const result = await this.database.db
+      .insert(userSessions)
+      .values({
+        id,
+        userId: data.userId,
+        currentRefreshHash: data.currentRefreshHash,
+        prevRefreshHash: null,
+        prevUsableUntil: null,
+        lastRotatedAt: now,
+        status: 'active',
+      })
+      .returning();
 
-    const row = await this.findById(id);
+    const [row] = result;
+
     if (!row) {
       throw new Error('Failed to create user session');
     }
-    return row;
+
+    return this.map(row);
   }
 
   public async findById(sessionId: string): Promise<UserSession | null> {

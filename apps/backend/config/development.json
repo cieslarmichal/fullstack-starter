@@ -1,6 +1,6 @@
 {
   "database": {
-    "url": "postgres://postgres:postgres@localhost:5432/fullstack-starter"
+    "url": "postgres://postgres:postgres@localhost:5432/postgres"
   },
   "cookie": {
     "secret": "12345678901a"

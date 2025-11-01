@@ -14,7 +14,7 @@
   },
   "rateLimit": {
     "auth": {
-      "max": 5,
+      "max": 10,
       "timeWindow": 600000
     }
   },

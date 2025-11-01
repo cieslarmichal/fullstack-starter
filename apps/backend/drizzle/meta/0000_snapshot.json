@@ -1,5 +1,5 @@
 {
-  "id": "1f137d9e-22b2-4334-a029-3be70578ee83",
+  "id": "7912c459-08bb-4d20-9fcb-850aefe53092",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -73,21 +73,6 @@
           "columns": [
             {
               "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_user_sessions_prev_refresh_hash": {
-          "name": "idx_user_sessions_prev_refresh_hash",
-          "columns": [
-            {
-              "expression": "prev_refresh_hash",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

@@ -1,3 +1,9 @@
 {
+  "rateLimit": {
+    "auth": {
+      "max": 5,
+      "timeWindow": 600000
+    }
+  },
   "logLevel": "info"
 }

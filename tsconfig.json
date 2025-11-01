@@ -32,7 +32,8 @@
     "noUncheckedSideEffectImports": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
-    "composite": true
+    "composite": true,
+    "erasableSyntaxOnly": true
   },
   "references": [],
 }

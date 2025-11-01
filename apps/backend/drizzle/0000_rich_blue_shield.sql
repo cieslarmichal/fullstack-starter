@@ -20,5 +20,4 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 ALTER TABLE "user_sessions" ADD CONSTRAINT "user_sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "idx_user_sessions_user_id" ON "user_sessions" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "idx_user_sessions_prev_refresh_hash" ON "user_sessions" USING btree ("prev_refresh_hash");
+CREATE INDEX "idx_user_sessions_user_id" ON "user_sessions" USING btree ("user_id");

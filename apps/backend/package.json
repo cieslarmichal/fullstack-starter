@@ -18,24 +18,25 @@
     "@fastify/cookie": "11.0.2",
     "@fastify/cors": "11.1.0",
     "@fastify/helmet": "13.0.2",
-    "@fastify/multipart": "9.2.1",
+    "@fastify/multipart": "9.3.0",
     "@fastify/rate-limit": "10.3.0",
-    "@fastify/type-provider-typebox": "6.0.0",
+    "@fastify/type-provider-typebox": "6.1.0",
     "@sinclair/typebox": "0.34.41",
     "bcrypt": "6.0.0",
     "config": "4.1.1",
     "fastify": "5.6.1",
     "jsonwebtoken": "9.0.2",
     "pg": "8.16.3",
-    "pino": "10.0.0",
+    "pino": "10.1.0",
     "uuid": "13.0.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "10.0.0",
+    "@faker-js/faker": "10.1.0",
     "@types/bcrypt": "6.0.0",
     "@types/config": "3.3.5",
     "@types/jsonwebtoken": "9.0.10",
-    "@types/pg": "8.15.5",
-    "vitest": "3.2.4"
+    "@types/pg": "8.15.6",
+    "@types/supertest": "6.0.3",
+    "supertest": "7.1.4"
   }
 }

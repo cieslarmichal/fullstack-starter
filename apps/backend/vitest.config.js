@@ -15,6 +15,7 @@ export default mergeConfig(
           singleFork: true,
         },
       },
+      fileParallelism: false,
     },
   }),
 );

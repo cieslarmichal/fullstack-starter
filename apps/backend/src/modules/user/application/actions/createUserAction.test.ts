@@ -54,6 +54,10 @@ describe('CreateUserAction', () => {
       expect(result.password).not.toBe(userData.password);
       const isPasswordValid = await passwordService.comparePasswords(userData.password, result.password);
       expect(isPasswordValid).toBe(true);
+
+      const storedUser = await userRepository.findById(result.id);
+      expect(storedUser).toBeDefined();
+      expect(storedUser?.email).toBe(userData.email);
     });
 
     it('throws ResourceAlreadyExistsError when user with email already exists', async () => {

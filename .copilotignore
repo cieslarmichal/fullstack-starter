@@ -1,0 +1,18 @@
+# Ignore all .env files (in any folder)
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Ignore local configuration JSON files
+local.json
+**/local.json
+*.local.json
+**/*.local.json
+
+# Optional: also ignore secrets or credentials patterns
+**/secrets.*
+**/credentials.*
+**/private_keys/**
+**/*.pem
+**/*.key

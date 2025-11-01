@@ -1,4 +1,4 @@
-import { fakerPL as faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { v7 as uuidv7 } from 'uuid';
 
 import type { CreateUserData } from '../src/modules/user/domain/repositories/userRepository.ts';

@@ -13,17 +13,17 @@ export default function Header() {
   const initial = (userData?.email?.[0] || 'U').toUpperCase();
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-background border-b border-border">
       <div className="flex items-center px-4 sm:px-6 lg:px-8 py-3">
         <div className="w-48 flex items-center">
           <Link
             to={'/'}
             className="flex items-center gap-3 group"
           >
-            <div className="h-9 w-9 bg-black rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
-              <span className="text-white font-bold text-lg">FS</span>
+            <div className="h-9 w-9 bg-primary rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
+              <span className="text-primary-foreground font-bold text-lg">FS</span>
             </div>
-            <span className="hidden sm:block text-xl font-bold text-black tracking-tight whitespace-nowrap">
+            <span className="hidden sm:block text-xl font-bold text-foreground tracking-tight whitespace-nowrap">
               Fullstack Starter
             </span>
           </Link>
@@ -41,9 +41,9 @@ export default function Header() {
                 <MenubarMenu>
                   <MenubarTrigger
                     omitOpenBg
-                    className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 ring-1 ring-gray-200 hover:ring-black transition-all p-0 cursor-pointer"
+                    className="h-10 w-10 rounded-full overflow-hidden bg-secondary ring-1 ring-border hover:ring-ring transition-all p-0 cursor-pointer"
                   >
-                    <span className="h-full w-full flex items-center justify-center text-sm font-semibold text-black">
+                    <span className="h-full w-full flex items-center justify-center text-sm font-semibold text-foreground">
                       {initial}
                     </span>
                   </MenubarTrigger>
@@ -67,14 +67,14 @@ export default function Header() {
                 variant="link"
                 size="lg"
                 onClick={() => navigate('/login')}
-                className="text-sm text-gray-600 hover:text-black font-medium"
+                className="text-sm font-medium"
               >
-                Login
+                Sign In
               </Button>
               <Button
                 size="lg"
                 onClick={() => navigate('/login?tab=register')}
-                className="text-sm bg-black hover:bg-gray-800 transition-colors font-semibold text-white rounded-md"
+                className="text-sm font-semibold rounded-md"
               >
                 Sign Up
               </Button>

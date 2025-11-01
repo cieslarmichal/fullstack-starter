@@ -1,9 +1,6 @@
-import { Type, type Static, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
+import { Type, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import {
-  createAuthenticationMiddleware,
-  createParamsAuthorizationMiddleware,
-} from '../../../common/auth/authMiddleware.ts';
+import { createAuthenticationMiddleware } from '../../../common/auth/authMiddleware.ts';
 import type { TokenService } from '../../../common/auth/tokenService.ts';
 import { CryptoService } from '../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
@@ -21,11 +18,14 @@ import type { User } from '../domain/types/user.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
 import { UserSessionRepositoryImpl } from '../infrastructure/repositories/userSessionRepositoryImpl.ts';
 
-const userSchema = Type.Object({
-  id: Type.String({ format: 'uuid' }),
-  email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
-  createdAt: Type.String({ format: 'date-time' }),
-});
+import {
+  loginRequestSchema,
+  loginResponseSchema,
+  refreshTokenResponseSchema,
+  registerRequestSchema,
+  userSchema,
+  type UserDto,
+} from './userSchemas.ts';
 
 const appEnvironment = process.env['NODE_ENV'];
 
@@ -45,14 +45,12 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     { result: { accessToken: string; refreshToken: string }; timestamp: number }
   >();
 
-  const mapUserToResponse = (user: User): Static<typeof userSchema> => {
-    const userResponse: Static<typeof userSchema> = {
+  const mapUserToResponse = (user: User): UserDto => {
+    return {
       id: user.id,
       email: user.email,
       createdAt: user.createdAt.toISOString(),
     };
-
-    return userResponse;
   };
 
   const refreshTokenCookie = {
@@ -90,14 +88,10 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   const logoutUserAction = new LogoutUserAction(userSessionRepository, tokenService);
 
   const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
-  const authorizationMiddleware = createParamsAuthorizationMiddleware();
 
   fastify.post('/users/register', {
     schema: {
-      body: Type.Object({
-        email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
-        password: Type.String({ minLength: 8, maxLength: 64 }),
-      }),
+      body: registerRequestSchema,
       response: {
         201: userSchema,
       },
@@ -123,7 +117,13 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const userId = (request as typeof request & { user: { userId: string } }).user.userId;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
 
       const user = await findUserAction.execute(userId);
 
@@ -133,12 +133,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
   fastify.post('/users/login', {
     schema: {
-      body: Type.Object({
-        email: Type.String({ format: 'email' }),
-        password: Type.String({ minLength: 8, maxLength: 64 }),
-      }),
+      body: loginRequestSchema,
       response: {
-        200: Type.Object({ accessToken: Type.String() }),
+        200: loginResponseSchema,
       },
     },
     config: {
@@ -175,7 +172,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   fastify.post('/users/refresh-token', {
     schema: {
       response: {
-        200: Type.Object({ accessToken: Type.String() }),
+        200: refreshTokenResponseSchema,
       },
     },
     handler: async (request, reply) => {
@@ -226,18 +223,21 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
   });
 
-  fastify.delete('/users/:userId', {
+  fastify.delete('/users/me', {
     schema: {
-      params: Type.Object({
-        userId: Type.String({ format: 'uuid' }),
-      }),
       response: {
         204: Type.Null(),
       },
     },
-    preHandler: [authenticationMiddleware, authorizationMiddleware],
+    preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
-      const { userId } = request.params;
+      if (!request.user) {
+        throw new UnauthorizedAccessError({
+          reason: 'User not authenticated',
+        });
+      }
+
+      const { userId } = request.user;
 
       await deleteUserAction.execute(userId);
 

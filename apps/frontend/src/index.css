@@ -38,13 +38,13 @@ body {
   --muted: oklch(0.96 0 0); /* Light gray */
   --muted-foreground: oklch(0.5 0 0); /* Mid gray */
 
-  /* Accent: Dark gray */
-  --accent: oklch(0.2 0 0); /* Dark gray */
-  --accent-foreground: oklch(1 0 0); /* White */
+  /* Accent: Light gray for hover states */
+  --accent: oklch(0.96 0 0); /* Light gray */
+  --accent-foreground: oklch(0.15 0 0); /* Almost black */
 
   /* Destructive: Keep red for errors */
   --destructive: oklch(0.55 0.22 25); /* Red */
-  --destructive-foreground: oklch(1 0 0); /* White */
+  --destructive-foreground: oklch(0.55 0.22 25); /* Red */
 
   /* Borders and inputs */
   --border: oklch(0.9 0 0); /* Light gray border */

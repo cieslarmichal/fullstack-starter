@@ -78,7 +78,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           const tokenResponse = await requestAccessTokenRefresh();
           setAccessToken(tokenResponse.accessToken);
         } catch {
-          console.log('No valid refresh token available - user needs to log in');
           setUserDataInitialized(true);
         }
       }
