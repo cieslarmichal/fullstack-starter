@@ -27,6 +27,7 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-object-type': ['off'],
       '@typescript-eslint/no-extraneous-class': ['off'],
       '@typescript-eslint/no-unnecessary-type-parameters': ['off'],
+      '@typescript-eslint/unified-signatures': ['off'],
       '@typescript-eslint/no-unnecessary-condition': ['error', { allowConstantLoopConditions: true }],
       '@typescript-eslint/consistent-type-imports': [
         'error',

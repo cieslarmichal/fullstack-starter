@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
@@ -8,22 +8,12 @@ export default function LoginPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab');
 
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>(tab === 'register' ? 'register' : 'login');
+  const activeTab = tab === 'register' ? 'register' : 'login';
   const [isRegistrationSuccess, setIsRegistrationSuccess] = useState(false);
 
-  useEffect(() => {
-    if (tab === 'register') {
-      setActiveTab('register');
-    } else {
-      setActiveTab('login');
-    }
-    // Reset registration success when changing tabs
-    setIsRegistrationSuccess(false);
-  }, [tab]);
-
   const handleTabChange = (newTab: 'login' | 'register') => {
-    setActiveTab(newTab);
-    setSearchParams({ tab: newTab });
+    const params: Record<string, string> = { tab: newTab };
+    setSearchParams(params);
     setIsRegistrationSuccess(false);
   };
 
@@ -33,8 +23,8 @@ export default function LoginPage() {
 
   const handleBackToLogin = () => {
     setIsRegistrationSuccess(false);
-    setActiveTab('login');
-    setSearchParams({ tab: 'login' });
+    const params: Record<string, string> = { tab: 'login' };
+    setSearchParams(params);
   };
 
   const getTabContent = () => {
