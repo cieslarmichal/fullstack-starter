@@ -1,7 +1,6 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyHelmet from '@fastify/helmet';
-import fastifyMultipart from '@fastify/multipart';
 import fastifyRateLimit from '@fastify/rate-limit';
 import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { fastify, type FastifyInstance, type FastifyRequest } from 'fastify';
@@ -17,10 +16,15 @@ import { serializeError } from '../common/errors/serializeError.ts';
 import { UnauthorizedAccessError } from '../common/errors/unathorizedAccessError.ts';
 import { httpStatusCodes } from '../common/http/httpStatusCode.ts';
 import { type LoggerService } from '../common/logger/loggerService.ts';
+import { UuidService } from '../common/uuid/uuidService.ts';
 import type { Database } from '../infrastructure/database/database.ts';
 import { userRoutes } from '../modules/user/routes/userRoutes.ts';
 
 import { type Config } from './config.ts';
+
+const maxObjectDepth = 10;
+const maxStringLength = 10000;
+const maxBodySize = 512 * 1024; // 512KB
 
 export class HttpServer {
   public readonly fastifyServer: FastifyInstance;
@@ -28,6 +32,7 @@ export class HttpServer {
   private readonly config: Config;
   private readonly database: Database;
   private isShuttingDown = false;
+  private activeConnections = 0;
 
   public constructor(config: Config, loggerService: LoggerService, database: Database) {
     this.config = config;
@@ -35,8 +40,12 @@ export class HttpServer {
     this.database = database;
 
     this.fastifyServer = fastify({
-      bodyLimit: 10 * 1024 * 1024,
+      bodyLimit: maxBodySize,
       logger: false,
+      connectionTimeout: 30000, // 30s
+      keepAliveTimeout: 5000, // 5s
+      requestTimeout: 30000, // 30s
+      trustProxy: true,
     }).withTypeProvider<TypeBoxTypeProvider>();
   }
 
@@ -51,10 +60,29 @@ export class HttpServer {
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
+      exposedHeaders: ['X-Request-ID'],
     });
-    await this.fastifyServer.register(fastifyHelmet);
-    await this.fastifyServer.register(fastifyMultipart, { limits: { fileSize: 1024 * 1024 * 1024 * 4 } });
-    await this.fastifyServer.register(fastifyRateLimit, { global: false });
+    await this.fastifyServer.register(fastifyHelmet, {
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+      crossOriginOpenerPolicy: { policy: 'same-origin' },
+      crossOriginEmbedderPolicy: false,
+      referrerPolicy: { policy: 'no-referrer' },
+      xContentTypeOptions: true,
+      xFrameOptions: { action: 'deny' },
+      xPermittedCrossDomainPolicies: { permittedPolicies: 'none' },
+      xDownloadOptions: true,
+      xDnsPrefetchControl: { allow: false },
+      hidePoweredBy: true,
+    });
+    await this.fastifyServer.register(fastifyRateLimit, {
+      global: true,
+      max: this.config.rateLimit.global.max,
+      timeWindow: this.config.rateLimit.global.timeWindow,
+      cache: 10000,
+      skipOnError: false,
+      keyGenerator: (request) => request.ip,
+    });
 
     const skipRequestLog = (request: FastifyRequest): boolean => {
       const isOptions = request.method === 'OPTIONS';
@@ -62,41 +90,81 @@ export class HttpServer {
       return isOptions || isHealth;
     };
 
-    this.fastifyServer.addHook('onRequest', (request, _reply, done) => {
+    this.fastifyServer.addHook('onRequest', (request, reply, done) => {
       if (skipRequestLog(request)) {
         done();
         return;
       }
 
-      this.loggerService.debug({
-        message: 'Incoming request',
-        method: request.method,
-        url: request.url,
+      const requestId = UuidService.generateUuid();
+      request.id = requestId;
+      reply.header('X-Request-ID', requestId);
+
+      this.activeConnections++;
+
+      this.loggerService.info({
+        message: 'Incoming request...',
+        requestId,
+        req: {
+          url: request.url,
+          ip: request.ip,
+        },
       });
 
       done();
     });
 
-    this.fastifyServer.addHook('onResponse', (request, reply, done) => {
+    // Content-Type validation for non-GET requests
+    this.fastifyServer.addHook('onRequest', (request, reply, done) => {
+      const unsafeMethods = ['POST', 'PATCH'];
+
+      const cookieOnlyEndpoints = ['/users/refresh-token', '/users/logout'];
+
+      if (
+        unsafeMethods.includes(request.method) &&
+        !cookieOnlyEndpoints.some((endpoint) => request.url.includes(endpoint))
+      ) {
+        const contentType = request.headers['content-type'];
+
+        if (!contentType || !contentType.includes('application/json')) {
+          this.loggerService.warn({
+            message: 'Invalid Content-Type for unsafe operation',
+            requestId: request.id,
+            method: request.method,
+            contentType: contentType || 'missing',
+          });
+
+          reply.status(httpStatusCodes.badRequest).send({
+            name: 'InputNotValidError',
+            message: 'Content-Type must be application/json for this operation',
+          });
+
+          return;
+        }
+      }
+
+      done();
+    });
+
+    this.fastifyServer.addHook('onSend', (request, reply, _payload, done) => {
       if (skipRequestLog(request)) {
         done();
         return;
       }
 
-      const payload = {
-        message: 'Request completed',
+      this.loggerService.info({
+        message: 'Request completed.',
+        requestId: request.id,
         method: request.method,
         url: request.url,
         statusCode: reply.statusCode,
-      };
+      });
 
-      if (reply.statusCode >= 500) {
-        this.loggerService.error(payload);
-      } else if (reply.statusCode >= 400) {
-        this.loggerService.warn(payload);
-      } else {
-        this.loggerService.info(payload);
-      }
+      done();
+    });
+
+    this.fastifyServer.addHook('onResponse', (_request, _reply, done) => {
+      this.activeConnections--;
       done();
     });
 
@@ -104,13 +172,26 @@ export class HttpServer {
       return (data): string => JSON.stringify(data);
     });
 
-    this.fastifyServer.addHook('preHandler', async (request) => {
+    this.fastifyServer.addHook('preHandler', async (request, reply) => {
       if (
         request.body &&
         typeof request.body === 'object' &&
         request.headers['content-type']?.includes('application/json')
       ) {
-        request.body = this.deepTrim(request.body);
+        try {
+          request.body = this.sanitizeInput(request.body, 0);
+        } catch (error) {
+          this.loggerService.warn({
+            message: 'Input sanitization failed',
+            requestId: request.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+
+          return reply.status(httpStatusCodes.badRequest).send({
+            name: 'InputNotValidError',
+            message: 'Invalid input: object too deep or string too long',
+          });
+        }
       }
     });
 
@@ -133,6 +214,28 @@ export class HttpServer {
 
     this.loggerService.info({ message: 'Stopping HTTP server...' });
 
+    // Stop accepting new connections
+    this.fastifyServer.server.unref();
+
+    // Wait for active connections to finish (with timeout)
+    const shutdownTimeout = 30000; // 30s
+    const shutdownStart = Date.now();
+
+    while (this.activeConnections > 0 && Date.now() - shutdownStart < shutdownTimeout) {
+      this.loggerService.info({
+        message: 'Waiting for active connections to finish...',
+        activeConnections: this.activeConnections,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    if (this.activeConnections > 0) {
+      this.loggerService.warn({
+        message: 'Forcing shutdown with active connections',
+        activeConnections: this.activeConnections,
+      });
+    }
+
     await this.fastifyServer.close();
 
     this.loggerService.info({ message: 'HTTP server stopped.' });
@@ -149,11 +252,14 @@ export class HttpServer {
     });
 
     this.fastifyServer.setErrorHandler((error, request, reply) => {
+      const requestId = request.id;
+
       if (error instanceof TypeError) {
         const serializedError = serializeError(error, true);
 
         this.loggerService.error({
-          message: 'HTTP request error',
+          message: 'HTTP request error - TypeError',
+          requestId,
           error: serializedError,
           endpoint: `${request.method} ${request.url}`,
         });
@@ -168,6 +274,8 @@ export class HttpServer {
         this.loggerService.warn({
           message: 'Rate limit exceeded',
           endpoint: `${request.method} ${request.url}`,
+          ip: request.ip,
+          requestId,
           error: error.message,
         });
 
@@ -182,18 +290,11 @@ export class HttpServer {
       this.loggerService.error({
         message: 'HTTP request error',
         error: serializedError,
+        requestId,
         endpoint: `${request.method} ${request.url}`,
       });
 
-      const responseError = {
-        ...serializedError,
-        stack: undefined,
-        cause: undefined,
-        context: {
-          ...(serializedError['context'] ? (serializedError['context'] as Record<string, unknown>) : {}),
-          originalError: undefined,
-        },
-      };
+      const responseError = this.sanitizeErrorResponse(serializedError);
 
       if (error instanceof InputNotValidError) {
         return reply.status(httpStatusCodes.badRequest).send(responseError);
@@ -212,10 +313,24 @@ export class HttpServer {
       }
 
       if (error instanceof UnauthorizedAccessError) {
+        this.loggerService.warn({
+          message: 'Unauthorized access attempt',
+          requestId,
+          endpoint: `${request.method} ${request.url}`,
+          ip: request.ip,
+        });
+
         return reply.status(httpStatusCodes.unauthorized).send(responseError);
       }
 
       if (error instanceof ForbiddenAccessError) {
+        this.loggerService.warn({
+          message: 'Forbidden access attempt',
+          requestId,
+          endpoint: `${request.method} ${request.url}`,
+          ip: request.ip,
+        });
+
         return reply.status(httpStatusCodes.forbidden).send(responseError);
       }
 
@@ -224,6 +339,68 @@ export class HttpServer {
         message: 'Internal server error',
       });
     });
+  }
+
+  private sanitizeErrorResponse(error: Record<string, unknown>): Record<string, unknown> {
+    const allowedFields = ['name', 'message'];
+    const sanitized: Record<string, unknown> = {};
+
+    for (const field of allowedFields) {
+      if (field in error) {
+        sanitized[field] = error[field];
+      }
+    }
+
+    if (error['context'] && typeof error['context'] === 'object') {
+      const context = error['context'] as Record<string, unknown>;
+      const safeContext: Record<string, unknown> = {};
+
+      const allowedContextFields = ['reason', 'value', 'field'];
+
+      for (const field of allowedContextFields) {
+        if (field in context) {
+          safeContext[field] = context[field];
+        }
+      }
+
+      if (Object.keys(safeContext).length > 0) {
+        sanitized['context'] = safeContext;
+      }
+    }
+
+    return sanitized;
+  }
+
+  private sanitizeInput(obj: unknown, depth: number): unknown {
+    // Prevent deeply nested objects (DoS protection)
+    if (depth > maxObjectDepth) {
+      throw new Error(`Object nesting exceeds maximum depth of ${String(maxObjectDepth)}`);
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.sanitizeInput(item, depth + 1));
+    }
+
+    if (obj && typeof obj === 'object') {
+      const sanitized: Record<string, unknown> = {};
+
+      for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+        sanitized[key] = this.sanitizeInput(value, depth + 1);
+      }
+
+      return sanitized;
+    }
+
+    if (typeof obj === 'string') {
+      // Prevent extremely long strings (DoS protection)
+      if (obj.length > maxStringLength) {
+        throw new Error(`String length exceeds maximum of ${String(maxStringLength)} characters`);
+      }
+
+      return obj.trim();
+    }
+
+    return obj;
   }
 
   private async registerRoutes(): Promise<void> {
@@ -239,27 +416,5 @@ export class HttpServer {
     this.fastifyServer.get('/health', async (_request, reply) => {
       reply.send({ healthy: true });
     });
-  }
-
-  private deepTrim(obj: unknown): unknown {
-    if (Array.isArray(obj)) {
-      return obj.map((item) => this.deepTrim(item));
-    }
-
-    if (obj && typeof obj === 'object') {
-      const trimmedObj: Record<string, unknown> = {};
-
-      for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
-        trimmedObj[key] = this.deepTrim(value);
-      }
-
-      return trimmedObj;
-    }
-
-    if (typeof obj === 'string') {
-      return obj.trim();
-    }
-
-    return obj;
   }
 }

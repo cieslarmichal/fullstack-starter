@@ -3,6 +3,10 @@
     "auth": {
       "max": 1000,
       "timeWindow": 600000
+    },
+    "global": {
+      "max": 10000,
+      "timeWindow": 60000
     }
   },
   "database": {

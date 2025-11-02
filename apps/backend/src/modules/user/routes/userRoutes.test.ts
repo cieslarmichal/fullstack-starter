@@ -382,6 +382,8 @@ describe('User Routes Integration Tests', () => {
         },
       });
 
+      console.log(response.body);
+
       expect(response.statusCode).toBe(204);
 
       // Verify user was deleted from database
