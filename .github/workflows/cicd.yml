@@ -93,10 +93,12 @@ jobs:
           key: build-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - name: Run backend unit and integration tests
-        run: npm run test:ci --workspace=@apps/backend
+      - name: Run database migrations
+        run: npm run db:migrate --workspace=@apps/backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+      - name: Run backend unit and integration tests
+        run: npm run test:ci --workspace=@apps/backend
 
   frontend-unit-tests:
     name: Frontend Unit Tests
@@ -162,7 +164,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Run database migrations
-        run: cd apps/backend && npm run db:migrate
+        run: npm run db:migrate --workspace=@apps/backend
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
 
