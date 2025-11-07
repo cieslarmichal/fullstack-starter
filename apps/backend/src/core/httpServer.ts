@@ -119,10 +119,10 @@ export class HttpServer {
         return;
       }
 
-      const level = reply.statusCode >= 400 ? 'warn' : 'info';
+      const level = reply.statusCode >= 500 ? 'error' : reply.statusCode >= 400 ? 'warn' : 'info';
 
       this.loggerService[level]({
-        message: 'Request completed.',
+        message: 'Request completed',
         event: 'http.request.end',
         requestId: request.id,
         method: request.method,
@@ -195,7 +195,7 @@ export class HttpServer {
 
     while (this.activeConnections > 0 && Date.now() - shutdownStart < shutdownTimeout) {
       this.loggerService.info({
-        message: 'Waiting for active connections to finish...',
+        message: 'Waiting for active connections to finish',
         activeConnections: this.activeConnections,
       });
       await new Promise((resolve) => setTimeout(resolve, 1000));
