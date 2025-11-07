@@ -5,7 +5,7 @@ import { TokenService } from '../../../../common/auth/tokenService.ts';
 import { UnauthorizedAccessError } from '../../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import { createConfig, type Config } from '../../../../core/config.ts';
-import { Database } from '../../../../infrastructure/database/database.ts';
+import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { userSessions, users } from '../../../../infrastructure/database/schema.ts';
 import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 import { UserSessionRepositoryImpl } from '../../infrastructure/repositories/userSessionRepositoryImpl.ts';
@@ -15,7 +15,7 @@ import { LoginUserAction } from './loginUserAction.ts';
 import { RefreshTokenAction } from './refreshTokenAction.ts';
 
 describe('RefreshTokenAction', () => {
-  let database: Database;
+  let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
   let userSessionRepository: UserSessionRepositoryImpl;
   let loginUserAction: LoginUserAction;
@@ -27,9 +27,9 @@ describe('RefreshTokenAction', () => {
 
   beforeEach(async () => {
     config = createConfig();
-    database = new Database({ url: config.database.url });
-    userRepository = new UserRepositoryImpl(database);
-    userSessionRepository = new UserSessionRepositoryImpl(database);
+    databaseClient = new DatabaseClient({ url: config.database.url });
+    userRepository = new UserRepositoryImpl(databaseClient);
+    userSessionRepository = new UserSessionRepositoryImpl(databaseClient);
     tokenService = new TokenService(config);
     passwordService = new PasswordService(config);
 
@@ -53,30 +53,35 @@ describe('RefreshTokenAction', () => {
       loggerService,
       tokenService,
       config,
+      databaseClient,
     );
 
-    await database.db.delete(userSessions);
-    await database.db.delete(users);
+    await databaseClient.db.delete(userSessions);
+    await databaseClient.db.delete(users);
   });
 
   afterEach(async () => {
-    await database.db.delete(userSessions);
-    await database.db.delete(users);
-    await database.close();
+    await databaseClient.db.delete(userSessions);
+    await databaseClient.db.delete(users);
+    await databaseClient.close();
   });
 
   describe('execute', () => {
     it('refreshes token successfully with valid refresh token and rotates session hash', async () => {
       const password = Generator.password();
+      const context = Generator.executionContext();
 
       const userData = Generator.userData({ password: await passwordService.hashPassword(password) });
 
       await userRepository.create(userData);
 
-      const loginResult = await loginUserAction.execute({
-        email: userData.email,
-        password,
-      });
+      const loginResult = await loginUserAction.execute(
+        {
+          email: userData.email,
+          password,
+        },
+        context,
+      );
 
       const { sessionId } = tokenService.verifyRefreshToken(loginResult.refreshToken);
       const sessionBefore = await userSessionRepository.findById(sessionId);
@@ -85,7 +90,7 @@ describe('RefreshTokenAction', () => {
       // Wait 1 second to ensure different token generation time
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const result = await refreshTokenAction.execute({ refreshToken: loginResult.refreshToken });
+      const result = await refreshTokenAction.execute({ refreshToken: loginResult.refreshToken }, context);
 
       expect(result.accessToken).toBeDefined();
       expect(result.refreshToken).toBeDefined();
@@ -98,7 +103,9 @@ describe('RefreshTokenAction', () => {
     });
 
     it('throws UnauthorizedAccessError when refresh token is invalid', async () => {
-      await expect(refreshTokenAction.execute({ refreshToken: 'invalid-token' })).rejects.toThrow(
+      const context = Generator.executionContext();
+
+      await expect(refreshTokenAction.execute({ refreshToken: 'invalid-token' }, context)).rejects.toThrow(
         UnauthorizedAccessError,
       );
     });

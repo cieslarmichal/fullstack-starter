@@ -17,7 +17,7 @@ import { UnauthorizedAccessError } from '../common/errors/unathorizedAccessError
 import { httpStatusCodes } from '../common/http/httpStatusCode.ts';
 import { type LoggerService } from '../common/logger/loggerService.ts';
 import { UuidService } from '../common/uuid/uuidService.ts';
-import type { Database } from '../infrastructure/database/database.ts';
+import type { DatabaseClient } from '../infrastructure/database/databaseClient.ts';
 import { userRoutes } from '../modules/user/routes/userRoutes.ts';
 
 import { type Config } from './config.ts';
@@ -30,14 +30,14 @@ export class HttpServer {
   public readonly fastifyServer: FastifyInstance;
   private readonly loggerService: LoggerService;
   private readonly config: Config;
-  private readonly database: Database;
+  private readonly databaseClient: DatabaseClient;
   private isShuttingDown = false;
   private activeConnections = 0;
 
-  public constructor(config: Config, loggerService: LoggerService, database: Database) {
+  public constructor(config: Config, loggerService: LoggerService, databaseClient: DatabaseClient) {
     this.config = config;
     this.loggerService = loggerService;
-    this.database = database;
+    this.databaseClient = databaseClient;
 
     this.fastifyServer = fastify({
       bodyLimit: maxBodySize,
@@ -102,46 +102,13 @@ export class HttpServer {
 
       this.activeConnections++;
 
-      this.loggerService.info({
-        message: 'Incoming request...',
-        requestId,
-        req: {
-          url: request.url,
-          ip: request.ip,
-        },
+      this.loggerService.debug({
+        message: 'Incoming HTTP request',
+        event: 'http.request.start',
+        requestId: request.id,
+        method: request.method,
+        url: request.url,
       });
-
-      done();
-    });
-
-    // Content-Type validation for non-GET requests
-    this.fastifyServer.addHook('onRequest', (request, reply, done) => {
-      const unsafeMethods = ['POST', 'PATCH'];
-
-      const cookieOnlyEndpoints = ['/users/refresh-token', '/users/logout'];
-
-      if (
-        unsafeMethods.includes(request.method) &&
-        !cookieOnlyEndpoints.some((endpoint) => request.url.includes(endpoint))
-      ) {
-        const contentType = request.headers['content-type'];
-
-        if (!contentType || !contentType.includes('application/json')) {
-          this.loggerService.warn({
-            message: 'Invalid Content-Type for unsafe operation',
-            requestId: request.id,
-            method: request.method,
-            contentType: contentType || 'missing',
-          });
-
-          reply.status(httpStatusCodes.badRequest).send({
-            name: 'InputNotValidError',
-            message: 'Content-Type must be application/json for this operation',
-          });
-
-          return;
-        }
-      }
 
       done();
     });
@@ -152,12 +119,16 @@ export class HttpServer {
         return;
       }
 
-      this.loggerService.info({
+      const level = reply.statusCode >= 400 ? 'warn' : 'info';
+
+      this.loggerService[level]({
         message: 'Request completed.',
+        event: 'http.request.end',
         requestId: request.id,
         method: request.method,
         url: request.url,
         statusCode: reply.statusCode,
+        userId: request.user?.userId,
       });
 
       done();
@@ -183,7 +154,10 @@ export class HttpServer {
         } catch (error) {
           this.loggerService.warn({
             message: 'Input sanitization failed',
+            event: 'http.request.input_sanitization_failed',
             requestId: request.id,
+            method: request.method,
+            url: request.url,
             error: error instanceof Error ? error.message : 'Unknown error',
           });
 
@@ -199,20 +173,18 @@ export class HttpServer {
 
     await this.fastifyServer.listen({ port, host });
 
-    this.loggerService.info({ message: 'HTTP server started.', port, host });
+    this.loggerService.info({ message: 'HTTP server started', port, host });
   }
 
   public async stop(): Promise<void> {
     if (this.isShuttingDown) {
-      this.loggerService.warn({
-        message: 'HTTP server is already shutting down, ignoring stop request...',
-      });
+      this.loggerService.warn({ message: 'HTTP server is already shutting down' });
       return;
     }
 
     this.isShuttingDown = true;
 
-    this.loggerService.info({ message: 'Stopping HTTP server...' });
+    this.loggerService.info({ message: 'Stopping HTTP server' });
 
     // Stop accepting new connections
     this.fastifyServer.server.unref();
@@ -255,13 +227,13 @@ export class HttpServer {
       const requestId = request.id;
 
       if (error instanceof TypeError) {
-        const serializedError = serializeError(error, true);
-
         this.loggerService.error({
-          message: 'HTTP request error - TypeError',
+          message: 'HTTP request type error',
+          event: 'http.request.error',
           requestId,
-          error: serializedError,
-          endpoint: `${request.method} ${request.url}`,
+          method: request.method,
+          url: request.url,
+          err: error,
         });
 
         return reply.status(httpStatusCodes.internalServerError).send({
@@ -273,9 +245,11 @@ export class HttpServer {
       if ('statusCode' in error && error.statusCode === 429) {
         this.loggerService.warn({
           message: 'Rate limit exceeded',
-          endpoint: `${request.method} ${request.url}`,
-          ip: request.ip,
+          event: 'http.request.rate_limited',
           requestId,
+          method: request.method,
+          url: request.url,
+          ip: request.ip,
           error: error.message,
         });
 
@@ -285,16 +259,16 @@ export class HttpServer {
         });
       }
 
-      const serializedError = serializeError(error);
-
       this.loggerService.error({
         message: 'HTTP request error',
-        error: serializedError,
+        event: 'http.request.error',
         requestId,
-        endpoint: `${request.method} ${request.url}`,
+        method: request.method,
+        url: request.url,
+        err: error,
       });
 
-      const responseError = this.sanitizeErrorResponse(serializedError);
+      const responseError = this.sanitizeErrorResponse(error);
 
       if (error instanceof InputNotValidError) {
         return reply.status(httpStatusCodes.badRequest).send(responseError);
@@ -315,8 +289,10 @@ export class HttpServer {
       if (error instanceof UnauthorizedAccessError) {
         this.loggerService.warn({
           message: 'Unauthorized access attempt',
+          event: 'http.request.error',
           requestId,
-          endpoint: `${request.method} ${request.url}`,
+          method: request.method,
+          url: request.url,
           ip: request.ip,
         });
 
@@ -326,8 +302,10 @@ export class HttpServer {
       if (error instanceof ForbiddenAccessError) {
         this.loggerService.warn({
           message: 'Forbidden access attempt',
+          event: 'http.request.error',
           requestId,
-          endpoint: `${request.method} ${request.url}`,
+          method: request.method,
+          url: request.url,
           ip: request.ip,
         });
 
@@ -341,7 +319,8 @@ export class HttpServer {
     });
   }
 
-  private sanitizeErrorResponse(error: Record<string, unknown>): Record<string, unknown> {
+  private sanitizeErrorResponse(errorRaw: Error): Record<string, unknown> {
+    const error = serializeError(errorRaw);
     const allowedFields = ['name', 'message'];
     const sanitized: Record<string, unknown> = {};
 
@@ -407,14 +386,43 @@ export class HttpServer {
     const tokenService = new TokenService(this.config);
 
     await this.fastifyServer.register(userRoutes, {
-      database: this.database,
+      databaseClient: this.databaseClient,
       config: this.config,
       loggerService: this.loggerService,
       tokenService,
     });
 
     this.fastifyServer.get('/health', async (_request, reply) => {
-      reply.send({ healthy: true });
+      const checks: Record<string, { status: 'healthy' | 'unhealthy'; latencyMs?: number; error?: string }> = {};
+
+      try {
+        const dbStart = Date.now();
+        await this.databaseClient.db.execute('SELECT 1');
+        checks['database'] = { status: 'healthy', latencyMs: Date.now() - dbStart };
+      } catch (error) {
+        checks['database'] = {
+          status: 'unhealthy',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        };
+      }
+
+      const allHealthy = Object.values(checks).every((check) => check.status === 'healthy');
+      const statusCode = allHealthy ? httpStatusCodes.ok : httpStatusCodes.internalServerError;
+
+      const response = {
+        status: allHealthy ? 'healthy' : 'unhealthy',
+        checks,
+      };
+
+      if (!allHealthy) {
+        this.loggerService.warn({
+          message: 'Health check failed',
+          event: 'http.health_check.failed',
+          checks,
+        });
+      }
+
+      return reply.status(statusCode).send(response);
     });
   }
 }

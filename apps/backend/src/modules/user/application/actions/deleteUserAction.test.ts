@@ -4,7 +4,7 @@ import { Generator } from '../../../../../tests/generator.ts';
 import { ResourceNotFoundError } from '../../../../common/errors/resourceNotFoundError.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import { createConfig } from '../../../../core/config.ts';
-import { Database } from '../../../../infrastructure/database/database.ts';
+import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { users } from '../../../../infrastructure/database/schema.ts';
 import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 
@@ -13,14 +13,14 @@ import { DeleteUserAction } from './deleteUserAction.ts';
 describe('DeleteUserAction', () => {
   const config = createConfig();
 
-  let database: Database;
+  let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
   let deleteUserAction: DeleteUserAction;
   let loggerService: LoggerService;
 
   beforeEach(async () => {
-    database = new Database({ url: config.database.url });
-    userRepository = new UserRepositoryImpl(database);
+    databaseClient = new DatabaseClient({ url: config.database.url });
+    userRepository = new UserRepositoryImpl(databaseClient);
 
     loggerService = {
       debug: () => {},
@@ -31,20 +31,21 @@ describe('DeleteUserAction', () => {
 
     deleteUserAction = new DeleteUserAction(userRepository, loggerService);
 
-    await database.db.delete(users);
+    await databaseClient.db.delete(users);
   });
   afterEach(async () => {
-    await database.db.delete(users);
-    await database.close();
+    await databaseClient.db.delete(users);
+    await databaseClient.close();
   });
 
   describe('execute', () => {
     it('marks user as deleted successfully', async () => {
       const userData = Generator.userData();
+      const context = Generator.executionContext();
 
       const user = await userRepository.create(userData);
 
-      await deleteUserAction.execute(user.id);
+      await deleteUserAction.execute(user.id, context);
 
       const deletedUser = await userRepository.findById(user.id);
       expect(deletedUser).toBeNull();
@@ -52,8 +53,9 @@ describe('DeleteUserAction', () => {
 
     it('throws ResourceNotFoundError when user does not exist', async () => {
       const nonExistentId = Generator.uuid();
+      const context = Generator.executionContext();
 
-      await expect(deleteUserAction.execute(nonExistentId)).rejects.toThrow(ResourceNotFoundError);
+      await expect(deleteUserAction.execute(nonExistentId, context)).rejects.toThrow(ResourceNotFoundError);
     });
   });
 });

@@ -6,7 +6,7 @@ import { CryptoService } from '../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
-import type { Database } from '../../../infrastructure/database/database.ts';
+import type { DatabaseClient } from '../../../infrastructure/database/databaseClient.ts';
 import { CreateUserAction } from '../application/actions/createUserAction.ts';
 import { DeleteUserAction } from '../application/actions/deleteUserAction.ts';
 import { FindUserAction } from '../application/actions/findUserAction.ts';
@@ -30,12 +30,12 @@ import {
 const appEnvironment = process.env['NODE_ENV'];
 
 export const userRoutes: FastifyPluginAsyncTypebox<{
-  database: Database;
+  databaseClient: DatabaseClient;
   config: Config;
   loggerService: LoggerService;
   tokenService: TokenService;
 }> = async function (fastify, opts) {
-  const { config, database, loggerService, tokenService } = opts;
+  const { config, databaseClient, loggerService, tokenService } = opts;
 
   // Idempotency window and single-flight coordination for refresh calls
   // Keyed by refresh token hash to avoid storing sensitive data.
@@ -64,8 +64,8 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     },
   };
 
-  const userRepository = new UserRepositoryImpl(database);
-  const userSessionRepository = new UserSessionRepositoryImpl(database);
+  const userRepository = new UserRepositoryImpl(databaseClient);
+  const userSessionRepository = new UserSessionRepositoryImpl(databaseClient);
   const passwordService = new PasswordService(config);
 
   const createUserAction = new CreateUserAction(userRepository, loggerService, passwordService);
@@ -84,6 +84,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     loggerService,
     tokenService,
     config,
+    databaseClient,
   );
   const logoutUserAction = new LogoutUserAction(userSessionRepository, tokenService);
 
@@ -97,13 +98,18 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       },
     },
     config: {
-      rateLimit: config.rateLimit.auth,
+      rateLimit: config.rateLimit.register,
     },
     handler: async (request, reply) => {
-      const user = await createUserAction.execute({
-        email: request.body.email,
-        password: request.body.password,
-      });
+      const user = await createUserAction.execute(
+        {
+          email: request.body.email,
+          password: request.body.password,
+        },
+        {
+          requestId: request.id,
+        },
+      );
 
       return reply.status(201).send(mapUserToResponse(user));
     },
@@ -114,6 +120,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       response: {
         200: userSchema,
       },
+    },
+    config: {
+      rateLimit: config.rateLimit.profile,
     },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
@@ -139,12 +148,17 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       },
     },
     config: {
-      rateLimit: config.rateLimit.auth,
+      rateLimit: config.rateLimit.login,
     },
     handler: async (request, reply) => {
       const { email, password } = request.body;
 
-      const result = await loginUserAction.execute({ email, password });
+      const result = await loginUserAction.execute(
+        { email, password },
+        {
+          requestId: request.id,
+        },
+      );
 
       reply.setCookie(refreshTokenCookie.name, result.refreshToken, refreshTokenCookie.config);
 
@@ -157,6 +171,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       response: {
         204: Type.Null(),
       },
+    },
+    config: {
+      rateLimit: config.rateLimit.logout,
     },
     handler: async (request, reply) => {
       const refreshToken = request.cookies[refreshTokenCookie.name];
@@ -174,6 +191,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       response: {
         200: refreshTokenResponseSchema,
       },
+    },
+    config: {
+      rateLimit: config.rateLimit.refreshToken,
     },
     handler: async (request, reply) => {
       const refreshToken = request.cookies[refreshTokenCookie.name];
@@ -197,7 +217,12 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       // Ensure single-flight per tokenHash
       let promise = inFlightRefreshes.get(tokenHash);
       if (!promise) {
-        promise = refreshTokenAction.execute({ refreshToken });
+        promise = refreshTokenAction.execute(
+          { refreshToken },
+          {
+            requestId: request.id,
+          },
+        );
         inFlightRefreshes.set(tokenHash, promise);
       }
 
@@ -229,6 +254,9 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
         204: Type.Null(),
       },
     },
+    config: {
+      rateLimit: config.rateLimit.accountDeletion,
+    },
     preHandler: [authenticationMiddleware],
     handler: async (request, reply) => {
       if (!request.user) {
@@ -239,7 +267,10 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
       const { userId } = request.user;
 
-      await deleteUserAction.execute(userId);
+      await deleteUserAction.execute(userId, {
+        requestId: request.id,
+        userId,
+      });
 
       return reply.status(204).send();
     },

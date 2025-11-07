@@ -29,11 +29,31 @@ const configSchema = Type.Object({
     port: Type.Number({ minimum: 1, maximum: 65535 }),
   }),
   rateLimit: Type.Object({
-    auth: Type.Object({
+    global: Type.Object({
       max: Type.Number({ minimum: 1 }),
       timeWindow: Type.Number({ minimum: 1000 }),
     }),
-    global: Type.Object({
+    register: Type.Object({
+      max: Type.Number({ minimum: 1 }),
+      timeWindow: Type.Number({ minimum: 1000 }),
+    }),
+    login: Type.Object({
+      max: Type.Number({ minimum: 1 }),
+      timeWindow: Type.Number({ minimum: 1000 }),
+    }),
+    logout: Type.Object({
+      max: Type.Number({ minimum: 1 }),
+      timeWindow: Type.Number({ minimum: 1000 }),
+    }),
+    refreshToken: Type.Object({
+      max: Type.Number({ minimum: 1 }),
+      timeWindow: Type.Number({ minimum: 1000 }),
+    }),
+    profile: Type.Object({
+      max: Type.Number({ minimum: 1 }),
+      timeWindow: Type.Number({ minimum: 1000 }),
+    }),
+    accountDeletion: Type.Object({
       max: Type.Number({ minimum: 1 }),
       timeWindow: Type.Number({ minimum: 1000 }),
     }),

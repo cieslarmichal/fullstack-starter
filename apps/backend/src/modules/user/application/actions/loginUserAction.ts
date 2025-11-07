@@ -2,6 +2,7 @@ import type { TokenService } from '../../../../common/auth/tokenService.ts';
 import { CryptoService } from '../../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
+import type { ExecutionContext } from '../../../../common/types/executionContext.ts';
 import { UuidService } from '../../../../common/uuid/uuidService.ts';
 import type { UserRepository } from '../../domain/repositories/userRepository.ts';
 import type { UserSessionRepository } from '../../domain/repositories/userSessionRepository.ts';
@@ -38,11 +39,13 @@ export class LoginUserAction {
     this.userSessionRepository = userSessionRepository;
   }
 
-  public async execute(loginData: LoginData): Promise<LoginResult> {
+  public async execute(loginData: LoginData, context: ExecutionContext): Promise<LoginResult> {
     const normalizedEmail = loginData.email.toLowerCase();
 
     this.loggerService.debug({
-      message: 'Starting user login...',
+      message: 'User login attempt',
+      event: 'user.login.start',
+      requestId: context.requestId,
       email: normalizedEmail,
     });
 
@@ -76,6 +79,8 @@ export class LoginUserAction {
 
     this.loggerService.info({
       message: 'User logged in successfully',
+      event: 'user.login.success',
+      requestId: context.requestId,
       userId: user.id,
       email: user.email,
     });

@@ -13,13 +13,33 @@
     "port": 5000
   },
   "rateLimit": {
-    "auth": {
-      "max": 10,
-      "timeWindow": 600000
-    },
     "global": {
       "max": 100,
       "timeWindow": 60000
+    },
+    "register": {
+      "max": 5,
+      "timeWindow": 600000
+    },
+    "login": {
+      "max": 10,
+      "timeWindow": 600000
+    },
+    "logout": {
+      "max": 20,
+      "timeWindow": 60000
+    },
+    "refreshToken": {
+      "max": 30,
+      "timeWindow": 60000
+    },
+    "profile": {
+      "max": 50,
+      "timeWindow": 60000
+    },
+    "accountDeletion": {
+      "max": 3,
+      "timeWindow": 3600000
     }
   },
   "token": {

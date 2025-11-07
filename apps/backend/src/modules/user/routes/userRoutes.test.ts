@@ -4,21 +4,21 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Generator } from '../../../../tests/generator.ts';
 import { truncateTables } from '../../../../tests/helpers/dbCleanup.ts';
 import { closeTestServer, createTestContext } from '../../../../tests/helpers/testServer.ts';
-import type { Database } from '../../../infrastructure/database/database.ts';
+import type { DatabaseClient } from '../../../infrastructure/database/databaseClient.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
 
 import type { LoginResponse, UserDto } from './userSchemas.ts';
 
 describe('User Routes Integration Tests', () => {
   let server: FastifyInstance;
-  let database: Database;
+  let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
 
   beforeAll(async () => {
     const testContext = await createTestContext();
     server = testContext.server;
-    database = testContext.database;
-    userRepository = new UserRepositoryImpl(database);
+    databaseClient = testContext.databaseClient;
+    userRepository = new UserRepositoryImpl(databaseClient);
   });
 
   afterAll(async () => {
@@ -26,7 +26,7 @@ describe('User Routes Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    await truncateTables(database);
+    await truncateTables(databaseClient);
   });
 
   describe('POST /users/register', () => {

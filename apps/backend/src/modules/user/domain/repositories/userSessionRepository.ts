@@ -1,3 +1,4 @@
+import type { Transaction } from '../../../../infrastructure/database/transaction.ts';
 import type { UserSession } from '../types/userSession.ts';
 
 export interface CreateUserSessionData {
@@ -21,10 +22,9 @@ export interface AcceptPreviousData {
 
 export interface UserSessionRepository {
   create(data: CreateUserSessionData): Promise<UserSession>;
-  findById(sessionId: string): Promise<UserSession | null>;
-  findByCurrentHash(tokenHash: string): Promise<UserSession | null>;
-  getByIdForUpdate(sessionId: string): Promise<UserSession | null>;
-  rotateWithGrace(data: RotateWithGraceData): Promise<UserSession>;
-  acceptPreviousIfWithinGrace(data: AcceptPreviousData): Promise<boolean>;
-  revoke(sessionId: string): Promise<void>;
+  findById(sessionId: string, tx?: Transaction): Promise<UserSession | null>;
+  findByCurrentHash(tokenHash: string, tx?: Transaction): Promise<UserSession | null>;
+  rotateWithGrace(data: RotateWithGraceData, tx?: Transaction): Promise<UserSession>;
+  acceptPreviousIfWithinGrace(data: AcceptPreviousData, tx?: Transaction): Promise<boolean>;
+  revoke(sessionId: string, tx?: Transaction): Promise<void>;
 }

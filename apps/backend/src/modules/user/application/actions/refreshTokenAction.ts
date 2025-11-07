@@ -2,7 +2,9 @@ import type { TokenService } from '../../../../common/auth/tokenService.ts';
 import { CryptoService } from '../../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
+import type { ExecutionContext } from '../../../../common/types/executionContext.ts';
 import type { Config } from '../../../../core/config.ts';
+import type { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import type { UserRepository } from '../../domain/repositories/userRepository.ts';
 import type { UserSessionRepository } from '../../domain/repositories/userSessionRepository.ts';
 
@@ -21,6 +23,7 @@ export class RefreshTokenAction {
   private readonly loggerService: LoggerService;
   private readonly tokenService: TokenService;
   private readonly config: Config;
+  private readonly databaseClient: DatabaseClient;
 
   public constructor(
     userRepository: UserRepository,
@@ -28,15 +31,17 @@ export class RefreshTokenAction {
     loggerService: LoggerService,
     tokenService: TokenService,
     config: Config,
+    databaseClient: DatabaseClient,
   ) {
     this.userRepository = userRepository;
     this.userSessionRepository = userSessionRepository;
     this.loggerService = loggerService;
     this.tokenService = tokenService;
     this.config = config;
+    this.databaseClient = databaseClient;
   }
 
-  public async execute(data: RefreshTokenData): Promise<RefreshTokenResult> {
+  public async execute(data: RefreshTokenData, context: ExecutionContext): Promise<RefreshTokenResult> {
     const { refreshToken } = data;
 
     const tokenPayload = this.tokenService.verifyRefreshToken(refreshToken);
@@ -62,39 +67,73 @@ export class RefreshTokenAction {
     const newRefreshToken = this.tokenService.generateRefreshToken(newRefreshPayload);
     const newHash = CryptoService.hashData(newRefreshToken);
 
-    // Attempt atomic rotate; if it fails, try accept previous within grace
-    const locked = await this.userSessionRepository.getByIdForUpdate(sessionId);
-    if (!locked || locked.status !== 'active') {
-      throw new UnauthorizedAccessError({ reason: 'Session not active' });
-    }
+    const startTime = Date.now();
 
-    if (locked.currentRefreshHash === tokenHash) {
-      await this.userSessionRepository.rotateWithGrace({
-        sessionId,
-        newRefreshHash: newHash,
-        graceMs: this.config.token.refresh.graceMs,
-      });
-    } else {
-      const accepted = await this.userSessionRepository.acceptPreviousIfWithinGrace({
-        sessionId,
-        presentedHash: tokenHash,
-      });
-      if (!accepted) {
-        await this.userSessionRepository.revoke(sessionId);
-        throw new UnauthorizedAccessError({ reason: 'Refresh token reuse detected' });
-      }
-      // accepted: do not rotate again; return same newest tokens
-      return {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      };
-    }
+    try {
+      await this.databaseClient.db.transaction(
+        async (tx) => {
+          // Attempt atomic rotate; if it fails, try accept previous within grace
+          const existingSession = await this.userSessionRepository.findById(sessionId, tx);
 
-    this.loggerService.info({
-      message: 'Tokens refreshed successfully.',
-      userId: user.id,
-      email: user.email,
-    });
+          if (!existingSession || existingSession.status !== 'active') {
+            throw new UnauthorizedAccessError({ reason: 'Session not active' });
+          }
+
+          if (existingSession.currentRefreshHash === tokenHash) {
+            await this.userSessionRepository.rotateWithGrace(
+              {
+                sessionId,
+                newRefreshHash: newHash,
+                graceMs: this.config.token.refresh.graceMs,
+              },
+              tx,
+            );
+          } else {
+            const accepted = await this.userSessionRepository.acceptPreviousIfWithinGrace(
+              {
+                sessionId,
+                presentedHash: tokenHash,
+              },
+              tx,
+            );
+
+            if (!accepted) {
+              await this.userSessionRepository.revoke(sessionId, tx);
+
+              throw new UnauthorizedAccessError({ reason: 'Refresh token reuse detected' });
+            }
+          }
+        },
+        {
+          isolationLevel: 'serializable',
+        },
+      );
+
+      const duration = Date.now() - startTime;
+
+      this.loggerService.info({
+        message: 'Tokens refreshed successfully',
+        event: 'user.token.refresh.success',
+        requestId: context.requestId,
+        userId: user.id,
+        email: user.email,
+        transactionDuration: duration,
+      });
+    } catch (error) {
+      const duration = Date.now() - startTime;
+
+      this.loggerService.error({
+        message: 'Token refresh transaction failed',
+        event: 'user.token.refresh.transaction.failure',
+        requestId: context.requestId,
+        userId: user.id,
+        email: user.email,
+        transactionDuration: duration,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      throw error;
+    }
 
     return {
       accessToken: newAccessToken,

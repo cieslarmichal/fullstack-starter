@@ -1,20 +1,27 @@
-import { serializeError } from './common/errors/serializeError.ts';
+import { LoggerServiceFactory } from './common/logger/loggerServiceFactory.ts';
 import { Application } from './core/application.ts';
 
 let isShuttingDown = false;
 
-export const finalErrorHandler = async (error: unknown): Promise<void> => {
+const fatalLogger = LoggerServiceFactory.create({ logLevel: 'error' });
+
+export const finalErrorHandler = async (error: unknown, signal?: string): Promise<void> => {
   if (isShuttingDown) {
     return;
   }
 
   isShuttingDown = true;
 
-  const serializedError = serializeError(error);
+  if (signal === 'SIGINT' || signal === 'SIGTERM') {
+    await Application.stop();
+    process.exit(0);
+  }
 
-  console.error({
-    message: 'Application error.',
-    context: JSON.stringify(serializedError),
+  fatalLogger.error({
+    message: 'Application fatal error',
+    event: 'application.fatal_error',
+    err: error,
+    signal,
   });
 
   await Application.stop();
@@ -22,13 +29,13 @@ export const finalErrorHandler = async (error: unknown): Promise<void> => {
   process.exit(1);
 };
 
-process.on('unhandledRejection', finalErrorHandler);
-process.on('uncaughtException', finalErrorHandler);
-process.on('SIGINT', finalErrorHandler);
-process.on('SIGTERM', finalErrorHandler);
+process.on('unhandledRejection', (error) => finalErrorHandler(error, 'unhandledRejection'));
+process.on('uncaughtException', (error) => finalErrorHandler(error, 'uncaughtException'));
+process.on('SIGINT', () => finalErrorHandler(new Error('SIGINT received'), 'SIGINT'));
+process.on('SIGTERM', () => finalErrorHandler(new Error('SIGTERM received'), 'SIGTERM'));
 
 try {
   await Application.start();
 } catch (error) {
-  await finalErrorHandler(error);
+  await finalErrorHandler(error, 'startup');
 }

@@ -4,7 +4,7 @@ import { Generator } from '../../../../../tests/generator.ts';
 import { ResourceAlreadyExistsError } from '../../../../common/errors/resourceAlreadyExistsError.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import { createConfig } from '../../../../core/config.ts';
-import { Database } from '../../../../infrastructure/database/database.ts';
+import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { users } from '../../../../infrastructure/database/schema.ts';
 import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 import { PasswordService } from '../services/passwordService.ts';
@@ -12,7 +12,7 @@ import { PasswordService } from '../services/passwordService.ts';
 import { CreateUserAction } from './createUserAction.ts';
 
 describe('CreateUserAction', () => {
-  let database: Database;
+  let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
   let createUserAction: CreateUserAction;
   let loggerService: LoggerService;
@@ -20,8 +20,8 @@ describe('CreateUserAction', () => {
 
   beforeEach(async () => {
     const config = createConfig();
-    database = new Database({ url: config.database.url });
-    userRepository = new UserRepositoryImpl(database);
+    databaseClient = new DatabaseClient({ url: config.database.url });
+    userRepository = new UserRepositoryImpl(databaseClient);
     passwordService = new PasswordService(config);
 
     loggerService = {
@@ -33,18 +33,19 @@ describe('CreateUserAction', () => {
 
     createUserAction = new CreateUserAction(userRepository, loggerService, passwordService);
 
-    await database.db.delete(users);
+    await databaseClient.db.delete(users);
   });
   afterEach(async () => {
-    await database.db.delete(users);
-    await database.close();
+    await databaseClient.db.delete(users);
+    await databaseClient.close();
   });
 
   describe('execute', () => {
     it('creates a new user successfully', async () => {
       const userData = Generator.userData();
+      const context = Generator.executionContext();
 
-      const result = await createUserAction.execute(userData);
+      const result = await createUserAction.execute(userData, context);
 
       expect(result).toBeDefined();
       expect(result.id).toBeDefined();
@@ -63,10 +64,11 @@ describe('CreateUserAction', () => {
     it('throws ResourceAlreadyExistsError when user with email already exists', async () => {
       const userData = Generator.userData();
       const newUserData = Generator.userData({ email: userData.email });
+      const context = Generator.executionContext();
 
-      await createUserAction.execute(userData);
+      await createUserAction.execute(userData, context);
 
-      await expect(createUserAction.execute(newUserData)).rejects.toThrow(ResourceAlreadyExistsError);
+      await expect(createUserAction.execute(newUserData, context)).rejects.toThrow(ResourceAlreadyExistsError);
     });
   });
 });

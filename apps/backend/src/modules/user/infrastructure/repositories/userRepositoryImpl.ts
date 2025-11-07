@@ -1,20 +1,20 @@
 import { eq } from 'drizzle-orm';
 
 import { UuidService } from '../../../../common/uuid/uuidService.ts';
-import type { Database } from '../../../../infrastructure/database/database.ts';
+import type { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { users } from '../../../../infrastructure/database/schema.ts';
 import type { CreateUserData, UserRepository } from '../../domain/repositories/userRepository.ts';
 import type { User } from '../../domain/types/user.ts';
 
 export class UserRepositoryImpl implements UserRepository {
-  private readonly database: Database;
+  private readonly databaseClient: DatabaseClient;
 
-  public constructor(database: Database) {
-    this.database = database;
+  public constructor(databaseClient: DatabaseClient) {
+    this.databaseClient = databaseClient;
   }
 
   public async create(userData: CreateUserData): Promise<User> {
-    const [newUser] = await this.database.db
+    const [newUser] = await this.databaseClient.db
       .insert(users)
       .values({
         id: UuidService.generateUuid(),
@@ -31,19 +31,19 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   public async findById(id: string): Promise<User | null> {
-    const [user] = await this.database.db.select().from(users).where(eq(users.id, id)).limit(1);
+    const [user] = await this.databaseClient.db.select().from(users).where(eq(users.id, id)).limit(1);
 
     return user ? this.mapToUser(user) : null;
   }
 
   public async findByEmail(email: string): Promise<User | null> {
-    const [user] = await this.database.db.select().from(users).where(eq(users.email, email)).limit(1);
+    const [user] = await this.databaseClient.db.select().from(users).where(eq(users.email, email)).limit(1);
 
     return user ? this.mapToUser(user) : null;
   }
 
   public async delete(id: string): Promise<void> {
-    await this.database.db.delete(users).where(eq(users.id, id));
+    await this.databaseClient.db.delete(users).where(eq(users.id, id));
   }
 
   private mapToUser(dbUser: typeof users.$inferSelect): User {

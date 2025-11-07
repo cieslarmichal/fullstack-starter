@@ -4,7 +4,7 @@ import { Generator } from '../../../../../tests/generator.ts';
 import { TokenService } from '../../../../common/auth/tokenService.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import { createConfig, type Config } from '../../../../core/config.ts';
-import { Database } from '../../../../infrastructure/database/database.ts';
+import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { userSessions, users } from '../../../../infrastructure/database/schema.ts';
 import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 import { UserSessionRepositoryImpl } from '../../infrastructure/repositories/userSessionRepositoryImpl.ts';
@@ -14,7 +14,7 @@ import { LoginUserAction } from './loginUserAction.ts';
 import { LogoutUserAction } from './logoutUserAction.ts';
 
 describe('LogoutUserAction', () => {
-  let database: Database;
+  let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
   let userSessionRepository: UserSessionRepositoryImpl;
   let loginUserAction: LoginUserAction;
@@ -26,9 +26,9 @@ describe('LogoutUserAction', () => {
 
   beforeEach(async () => {
     config = createConfig();
-    database = new Database({ url: config.database.url });
-    userRepository = new UserRepositoryImpl(database);
-    userSessionRepository = new UserSessionRepositoryImpl(database);
+    databaseClient = new DatabaseClient({ url: config.database.url });
+    userRepository = new UserRepositoryImpl(databaseClient);
+    userSessionRepository = new UserSessionRepositoryImpl(databaseClient);
     tokenService = new TokenService(config);
     passwordService = new PasswordService(config);
 
@@ -48,18 +48,19 @@ describe('LogoutUserAction', () => {
     );
     logoutUserAction = new LogoutUserAction(userSessionRepository, tokenService);
 
-    await database.db.delete(userSessions);
-    await database.db.delete(users);
+    await databaseClient.db.delete(userSessions);
+    await databaseClient.db.delete(users);
   });
   afterEach(async () => {
-    await database.db.delete(userSessions);
-    await database.db.delete(users);
-    await database.close();
+    await databaseClient.db.delete(userSessions);
+    await databaseClient.db.delete(users);
+    await databaseClient.close();
   });
 
   describe('execute', () => {
     it('revokes session successfully', async () => {
       const password = Generator.password();
+      const context = Generator.executionContext();
 
       const userData = Generator.userData({
         password: await passwordService.hashPassword(password),
@@ -67,10 +68,13 @@ describe('LogoutUserAction', () => {
 
       await userRepository.create(userData);
 
-      const loginResult = await loginUserAction.execute({
-        email: userData.email,
-        password,
-      });
+      const loginResult = await loginUserAction.execute(
+        {
+          email: userData.email,
+          password,
+        },
+        context,
+      );
 
       await logoutUserAction.execute({ refreshToken: loginResult.refreshToken });
 

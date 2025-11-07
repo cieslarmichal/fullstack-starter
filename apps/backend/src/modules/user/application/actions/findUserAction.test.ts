@@ -3,29 +3,29 @@ import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import { Generator } from '../../../../../tests/generator.ts';
 import { ResourceNotFoundError } from '../../../../common/errors/resourceNotFoundError.ts';
 import { createConfig } from '../../../../core/config.ts';
-import { Database } from '../../../../infrastructure/database/database.ts';
+import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { users } from '../../../../infrastructure/database/schema.ts';
 import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 
 import { FindUserAction } from './findUserAction.ts';
 
 describe('FindUserAction', () => {
-  let database: Database;
+  let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
   let findUserAction: FindUserAction;
 
   beforeEach(async () => {
     const config = createConfig();
-    database = new Database({ url: config.database.url });
-    userRepository = new UserRepositoryImpl(database);
+    databaseClient = new DatabaseClient({ url: config.database.url });
+    userRepository = new UserRepositoryImpl(databaseClient);
 
     findUserAction = new FindUserAction(userRepository);
 
-    await database.db.delete(users);
+    await databaseClient.db.delete(users);
   });
   afterEach(async () => {
-    await database.db.delete(users);
-    await database.close();
+    await databaseClient.db.delete(users);
+    await databaseClient.close();
   });
 
   describe('execute', () => {

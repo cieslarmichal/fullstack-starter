@@ -3,16 +3,16 @@ import type { FastifyInstance } from 'fastify';
 import { LoggerServiceFactory } from '../../src/common/logger/loggerServiceFactory.ts';
 import { createConfig } from '../../src/core/config.ts';
 import { HttpServer } from '../../src/core/httpServer.ts';
-import { Database } from '../../src/infrastructure/database/database.ts';
+import { DatabaseClient } from '../../src/infrastructure/database/databaseClient.ts';
 
 let testServer: HttpServer | undefined;
-let testDatabase: Database | undefined;
+let testDatabase: DatabaseClient | undefined;
 
-export async function createTestContext(): Promise<{ server: FastifyInstance; database: Database }> {
+export async function createTestContext(): Promise<{ server: FastifyInstance; databaseClient: DatabaseClient }> {
   const config = createConfig();
   const loggerService = LoggerServiceFactory.create({ logLevel: 'silent' });
 
-  testDatabase = new Database({ url: config.database.url });
+  testDatabase = new DatabaseClient({ url: config.database.url });
   await testDatabase.testConnection();
 
   testServer = new HttpServer(config, loggerService, testDatabase);

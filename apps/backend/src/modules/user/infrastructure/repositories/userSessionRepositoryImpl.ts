@@ -1,8 +1,9 @@
 import { and, eq, sql } from 'drizzle-orm';
 
 import { UuidService } from '../../../../common/uuid/uuidService.ts';
-import type { Database } from '../../../../infrastructure/database/database.ts';
+import type { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { userSessions } from '../../../../infrastructure/database/schema.ts';
+import type { Transaction } from '../../../../infrastructure/database/transaction.ts';
 import type {
   AcceptPreviousData,
   CreateUserSessionData,
@@ -12,17 +13,17 @@ import type {
 import type { UserSession } from '../../domain/types/userSession.ts';
 
 export class UserSessionRepositoryImpl implements UserSessionRepository {
-  private readonly database: Database;
+  private readonly databaseClient: DatabaseClient;
 
-  public constructor(database: Database) {
-    this.database = database;
+  public constructor(databaseClient: DatabaseClient) {
+    this.databaseClient = databaseClient;
   }
 
   public async create(data: CreateUserSessionData): Promise<UserSession> {
     const id = data.id ?? UuidService.generateUuid();
     const now = new Date();
 
-    const result = await this.database.db
+    const result = await this.databaseClient.db
       .insert(userSessions)
       .values({
         id,
@@ -44,32 +45,33 @@ export class UserSessionRepositoryImpl implements UserSessionRepository {
     return this.map(row);
   }
 
-  public async findById(sessionId: string): Promise<UserSession | null> {
-    const [row] = await this.database.db.select().from(userSessions).where(eq(userSessions.id, sessionId)).limit(1);
+  public async findById(sessionId: string, tx?: Transaction): Promise<UserSession | null> {
+    const db = tx ?? this.databaseClient.db;
+
+    const query = db.select().from(userSessions).where(eq(userSessions.id, sessionId)).limit(1);
+
+    const [row] = tx ? await query.for('update') : await query;
+
     return row ? this.map(row) : null;
   }
 
-  public async findByCurrentHash(tokenHash: string): Promise<UserSession | null> {
-    const [row] = await this.database.db
-      .select()
-      .from(userSessions)
-      .where(eq(userSessions.currentRefreshHash, tokenHash))
-      .limit(1);
+  public async findByCurrentHash(tokenHash: string, tx?: Transaction): Promise<UserSession | null> {
+    const db = tx ?? this.databaseClient.db;
+
+    const query = db.select().from(userSessions).where(eq(userSessions.currentRefreshHash, tokenHash)).limit(1);
+
+    const [row] = tx ? await query.for('update') : await query;
+
     return row ? this.map(row) : null;
   }
 
-  public async getByIdForUpdate(sessionId: string): Promise<UserSession | null> {
-    const query = this.database.db.select().from(userSessions).where(eq(userSessions.id, sessionId)).limit(1);
-
-    const [row] = await query.for('update');
-    return row ? this.map(row) : null;
-  }
-
-  public async rotateWithGrace(data: RotateWithGraceData): Promise<UserSession> {
+  public async rotateWithGrace(data: RotateWithGraceData, tx?: Transaction): Promise<UserSession> {
     const now = data.now ?? new Date();
     const prevUsableUntil = new Date(now.getTime() + data.graceMs);
 
-    await this.database.db
+    const db = tx ?? this.databaseClient.db;
+
+    await db
       .update(userSessions)
       .set({
         prevRefreshHash: sql`${userSessions.currentRefreshHash}` as unknown as string,
@@ -87,9 +89,12 @@ export class UserSessionRepositoryImpl implements UserSessionRepository {
     return updated;
   }
 
-  public async acceptPreviousIfWithinGrace(data: AcceptPreviousData): Promise<boolean> {
+  public async acceptPreviousIfWithinGrace(data: AcceptPreviousData, tx?: Transaction): Promise<boolean> {
     const now = data.now ?? new Date();
-    const [row] = await this.database.db
+
+    const db = tx ?? this.databaseClient.db;
+
+    const [row] = await db
       .select({ prevRefreshHash: userSessions.prevRefreshHash, prevUsableUntil: userSessions.prevUsableUntil })
       .from(userSessions)
       .where(eq(userSessions.id, data.sessionId))
@@ -101,9 +106,12 @@ export class UserSessionRepositoryImpl implements UserSessionRepository {
     return withinGrace && !!row.prevRefreshHash && row.prevRefreshHash === data.presentedHash;
   }
 
-  public async revoke(sessionId: string): Promise<void> {
+  public async revoke(sessionId: string, tx?: Transaction): Promise<void> {
     const now = new Date();
-    await this.database.db
+
+    const db = tx ?? this.databaseClient.db;
+
+    await db
       .update(userSessions)
       .set({ status: 'revoked', updatedAt: now })
       .where(and(eq(userSessions.id, sessionId), eq(userSessions.status, 'active')));
