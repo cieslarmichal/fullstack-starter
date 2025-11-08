@@ -20,7 +20,7 @@ export async function createTestContext(): Promise<{ server: FastifyInstance; da
 
   return {
     server: testServer.fastifyServer,
-    database: testDatabase,
+    databaseClient: testDatabase,
   };
 }
 
