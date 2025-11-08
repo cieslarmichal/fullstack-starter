@@ -119,9 +119,7 @@ export class HttpServer {
         return;
       }
 
-      const level = reply.statusCode >= 500 ? 'error' : reply.statusCode >= 400 ? 'warn' : 'info';
-
-      this.loggerService[level]({
+      this.loggerService.debug({
         message: 'Request completed',
         event: 'http.request.end',
         requestId: request.id,
