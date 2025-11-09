@@ -19,10 +19,10 @@ primary_region = "fra"
   min_machines_running = 1
   processes = ["app"]
 
-  [http_service.concurrency]
-    type = "connections"
-    hard_limit = 150
-    soft_limit = 100
+[http_service.concurrency]
+  type = "connections"
+  hard_limit = 150
+  soft_limit = 100
 
 [[http_service.checks]]
   grace_period = "30s"
