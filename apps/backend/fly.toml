@@ -17,6 +17,7 @@ primary_region = "fra"
   auto_stop_machines = false
   auto_start_machines = false
   min_machines_running = 1
+  max_machines_running = 1
   processes = ["app"]
 
   [http_service.concurrency]
