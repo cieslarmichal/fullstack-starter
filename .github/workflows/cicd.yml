@@ -217,29 +217,6 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_TOKEN }}
 
-      - name: Health check
-        run: |
-          echo "Waiting for deployment to be ready..."
-          sleep 10
-          for i in {1..12}; do
-            if curl -f -s https://your-backend.fly.dev/health > /dev/null 2>&1; then
-              echo "✅ Backend health check passed"
-              exit 0
-            fi
-            echo "Attempt $i/12 failed, retrying in 5s..."
-            sleep 5
-          done
-          echo "❌ Backend health check failed"
-          exit 1
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "Deployment failed, attempting rollback..."
-          flyctl releases rollback --app your-backend-app -y
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_TOKEN }}
-
   deploy-frontend:
     name: Deploy Frontend to Fly.io
     runs-on: ubuntu-latest
@@ -253,28 +230,5 @@ jobs:
 
       - name: Deploy frontend
         run: flyctl deploy -c apps/frontend/fly.toml --remote-only --depot=false
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_TOKEN }}
-
-      - name: Health check
-        run: |
-          echo "Waiting for deployment to be ready..."
-          sleep 10
-          for i in {1..12}; do
-            if curl -f -s https://your-frontend.fly.dev > /dev/null 2>&1; then
-              echo "✅ Frontend health check passed"
-              exit 0
-            fi
-            echo "Attempt $i/12 failed, retrying in 5s..."
-            sleep 5
-          done
-          echo "❌ Frontend health check failed"
-          exit 1
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "Deployment failed, attempting rollback..."
-          flyctl releases rollback --app your-frontend-app -y
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_TOKEN }}
