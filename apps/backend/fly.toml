@@ -1,37 +1,37 @@
-app = "fullstack-starter-backend"
-primary_region = "fra"
+app = 'fullstack-starter-backend'
+primary_region = 'fra'
 
 [build]
-  dockerfile = "./Dockerfile"
-  build-target = "runner"
+  dockerfile = './Dockerfile'
+  build-target = 'runner'
 
 [deploy]
-  strategy = "rolling"
+  strategy = 'rolling'
 
 [env]
-  NODE_ENV = "production"
+  NODE_ENV = 'production'
 
 [http_service]
   internal_port = 5000
   force_https = true
-  auto_stop_machines = false
+  auto_stop_machines = 'off'
   auto_start_machines = false
   min_machines_running = 1
-  processes = ["app"]
+  processes = ['app']
 
-[http_service.concurrency]
-  type = "connections"
-  hard_limit = 150
-  soft_limit = 100
+  [http_service.concurrency]
+    type = 'connections'
+    hard_limit = 150
+    soft_limit = 100
 
-[[http_service.checks]]
-  grace_period = "30s"
-  interval = "30s"
-  method = "GET"
-  timeout = "10s"
-  path = "/health"
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '10s'
+    grace_period = '30s'
+    method = 'GET'
+    path = '/health'
 
 [[vm]]
-  cpu_kind = "shared"
+  cpu_kind = 'shared'
   cpus = 1
   memory_mb = 1024
