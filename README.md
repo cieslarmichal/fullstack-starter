@@ -105,3 +105,34 @@ Hot module reload for instant feedback, TypeScript strict mode for type safety, 
    cd apps/backend
    npm run dev
    ```
+
+## Initial Deployment Configuration
+
+The application is configured for deployment on Fly.io. Ensure you have the [Fly CLI](https://fly.io/docs/getting-started/installing-flyctl/) installed.
+
+### Deploying to Fly.io
+
+1. Authenticate with Fly
+```bash
+flyctl auth login
+```
+
+2. Launch frontend and backend apps (replace <your-app-name> and paths as needed)
+```bash
+fly launch --name <your-app-name>-frontend -c ./apps/frontend/fly.toml
+fly launch --name <your-app-name>-backend  -c ./apps/backend/fly.toml
+```
+
+3. Create a PostgreSQL instance on Fly (replace <region>)
+```bash
+flyctl postgres create --name <your-app-name>-db --region <region>
+```
+
+4. Configure the backend to use the database
+- Retrieve the DB connection string from the Fly UI or the postgres creation output.
+- Set it as a secret for the backend app:
+```bash
+flyctl secrets set DATABASE_URL='<postgres-connection-string>' --app <your-app-name>-backend
+```
+
+5. CI/CD will handle deployments on push to main branch.
