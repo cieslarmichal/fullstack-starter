@@ -13,7 +13,7 @@ export class Application {
 
     const loggerService = LoggerServiceFactory.create({ logLevel: config.logLevel });
 
-    this.databaseClient = new DatabaseClient({ url: config.database.url });
+    this.databaseClient = new DatabaseClient(config.database);
 
     await this.databaseClient.testConnection();
 

@@ -10,7 +10,6 @@ export const registerUser = async (input: RegisterUserRequest): Promise<User> =>
   try {
     return await apiRequest<User>('/users/register', {
       method: 'POST',
-      requiresAuth: false,
       body: {
         email: input.email,
         password: input.password,

@@ -12,7 +12,7 @@ export async function createTestContext(): Promise<{ server: FastifyInstance; da
   const config = createConfig();
   const loggerService = LoggerServiceFactory.create({ logLevel: 'silent' });
 
-  testDatabase = new DatabaseClient({ url: config.database.url });
+  testDatabase = new DatabaseClient(config.database);
   await testDatabase.testConnection();
 
   testServer = new HttpServer(config, loggerService, testDatabase);

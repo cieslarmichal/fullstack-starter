@@ -6,10 +6,19 @@ import { ConfigurationError } from '../common/errors/configurationError.ts';
 import { type LogLevel, logLevels } from '../common/logger/logLevel.ts';
 
 const configSchema = Type.Object({
-  database: Type.Object({ url: Type.String({ minLength: 1 }) }),
+  database: Type.Object({
+    url: Type.String({ minLength: 1 }),
+    ssl: Type.Boolean(),
+    pool: Type.Object({
+      min: Type.Number({ minimum: 1, maximum: 50 }),
+      max: Type.Number({ minimum: 10, maximum: 200 }),
+      idleTimeoutMillis: Type.Number({ minimum: 10000, maximum: 120000 }),
+      connectionTimeoutMillis: Type.Number({ minimum: 2000, maximum: 30000 }),
+    }),
+  }),
   cookie: Type.Object({ secret: Type.String({ minLength: 1 }) }),
   frontendUrl: Type.String({ minLength: 1 }),
-  hashSaltRounds: Type.Number({ minimum: 5, maximum: 12 }),
+  hashSaltRounds: Type.Number({ minimum: 10, maximum: 15 }),
   logLevel: Type.Union([...Object.values(logLevels).map((level) => Type.Literal(level as LogLevel))]),
   token: Type.Object({
     access: Type.Object({

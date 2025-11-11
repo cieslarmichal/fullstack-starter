@@ -19,7 +19,7 @@ describe('DeleteUserAction', () => {
   let loggerService: LoggerService;
 
   beforeEach(async () => {
-    databaseClient = new DatabaseClient({ url: config.database.url });
+    databaseClient = new DatabaseClient(config.database);
     userRepository = new UserRepositoryImpl(databaseClient);
 
     loggerService = {

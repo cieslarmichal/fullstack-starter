@@ -12,7 +12,6 @@ type LoginUserResponse = {
 export const loginUser = async (input: LoginUserRequest): Promise<LoginUserResponse> => {
   return apiRequest<LoginUserResponse>('/users/login', {
     method: 'POST',
-    requiresAuth: false,
     body: {
       email: input.email,
       password: input.password,

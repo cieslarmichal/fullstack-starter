@@ -4,12 +4,17 @@ import { AuthContext } from './AuthContext';
 import { User } from '../api/types/user';
 import { getMyUser } from '../api/queries/getMyUser';
 import { logoutUser } from '../api/queries/logout';
-import { requestAccessTokenRefresh, setTokenRefreshCallback, setAccessTokenGetter } from '../api/apiRequest';
+import {
+  requestAccessTokenRefresh,
+  setTokenRefreshCallback,
+  setAccessToken as setApiAccessToken,
+} from '../api/apiRequest';
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<User | null>(null);
   const [userDataInitialized, setUserDataInitialized] = useState<boolean>(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState<boolean>(false);
 
   const refreshUserData = useCallback(async () => {
     if (accessToken) {
@@ -44,7 +49,11 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             const tokenResponse = await requestAccessTokenRefresh();
             setAccessToken(tokenResponse.accessToken);
           } catch (error) {
-            console.error('Silent refresh failed:', error);
+            console.error('Silent refresh failed - clearing auth state:', error);
+            // If silent refresh fails, clear the auth state to force re-login
+            setAccessToken(null);
+            setUserData(null);
+            setUserDataInitialized(true);
           }
         },
         10 * 60 * 1000,
@@ -65,15 +74,16 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [updateAccessToken]);
 
-  // Update the access token getter whenever the token changes
+  // Update the access token in apiRequest module whenever the token changes
   useEffect(() => {
-    setAccessTokenGetter(() => accessToken);
+    setApiAccessToken(accessToken);
   }, [accessToken]);
 
-  // Try to refresh token on app initialization
+  // Try to refresh token on app initialization - only once
   useEffect(() => {
     const initializeAuth = async () => {
-      if (!accessToken) {
+      if (!hasAttemptedRefresh && !accessToken) {
+        setHasAttemptedRefresh(true);
         try {
           const tokenResponse = await requestAccessTokenRefresh();
           setAccessToken(tokenResponse.accessToken);
@@ -84,7 +94,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     initializeAuth();
-  }, [accessToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   useEffect(() => {
     const fetchUserData = async () => {

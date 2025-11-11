@@ -3,21 +3,33 @@ import { Pool } from 'pg';
 
 import * as schema from './schema.ts';
 
-export interface DatabaseClientConfig {
+export interface DatabaseConfig {
   readonly url: string;
+  readonly ssl: boolean;
+  readonly pool: {
+    readonly min: number;
+    readonly max: number;
+    readonly idleTimeoutMillis: number;
+    readonly connectionTimeoutMillis: number;
+  };
 }
 
 export class DatabaseClient {
   private pool: Pool;
   public readonly db: ReturnType<typeof drizzle>;
 
-  public constructor(config: DatabaseClientConfig) {
+  public constructor(config: DatabaseConfig) {
     this.pool = new Pool({
       connectionString: config.url,
-      ssl: false,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      ssl: config.ssl
+        ? {
+            rejectUnauthorized: true,
+          }
+        : false,
+      min: config.pool.min,
+      max: config.pool.max,
+      idleTimeoutMillis: config.pool.idleTimeoutMillis,
+      connectionTimeoutMillis: config.pool.connectionTimeoutMillis,
     });
 
     this.db = drizzle(this.pool, { schema });
