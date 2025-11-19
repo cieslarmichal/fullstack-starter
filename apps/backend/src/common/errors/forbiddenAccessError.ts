@@ -8,4 +8,8 @@ export class ForbiddenAccessError extends BaseError<Context> {
   public constructor(context: Context) {
     super('ForbiddenAccessError', 'No permissions to perform this action.', context);
   }
+
+  protected override getExposableContextFields(): string[] {
+    return ['reason'];
+  }
 }

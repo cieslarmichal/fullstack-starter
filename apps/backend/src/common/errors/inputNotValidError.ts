@@ -2,11 +2,15 @@ import { BaseError, type BaseErrorContext } from './baseError.ts';
 
 interface Context extends BaseErrorContext {
   readonly reason: string;
-  readonly value: unknown;
+  readonly value?: unknown;
 }
 
 export class InputNotValidError extends BaseError<Context> {
   public constructor(context: Context) {
     super('InputNotValidError', 'Input not valid.', context);
+  }
+
+  protected override getExposableContextFields(): string[] {
+    return ['reason', 'value'];
   }
 }

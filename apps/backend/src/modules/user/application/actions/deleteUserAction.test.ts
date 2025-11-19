@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 
 import { Generator } from '../../../../../tests/generator.ts';
 import { ResourceNotFoundError } from '../../../../common/errors/resourceNotFoundError.ts';
-import type { LoggerService } from '../../../../common/logger/loggerService.ts';
+import { LoggerServiceFactory } from '../../../../common/logger/loggerServiceFactory.ts';
 import { createConfig } from '../../../../core/config.ts';
 import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { users } from '../../../../infrastructure/database/schema.ts';
@@ -16,18 +16,11 @@ describe('DeleteUserAction', () => {
   let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
   let deleteUserAction: DeleteUserAction;
-  let loggerService: LoggerService;
 
   beforeEach(async () => {
-    databaseClient = new DatabaseClient(config.database);
+    const loggerService = LoggerServiceFactory.create({ logLevel: 'silent' });
+    databaseClient = new DatabaseClient(config.database, loggerService);
     userRepository = new UserRepositoryImpl(databaseClient);
-
-    loggerService = {
-      debug: () => {},
-      info: () => {},
-      warn: () => {},
-      error: () => {},
-    } as unknown as LoggerService;
 
     deleteUserAction = new DeleteUserAction(userRepository, loggerService);
 

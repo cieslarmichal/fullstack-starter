@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 
 import { Generator } from '../../../../../tests/generator.ts';
 import { TokenService } from '../../../../common/auth/tokenService.ts';
-import type { LoggerService } from '../../../../common/logger/loggerService.ts';
+import { LoggerServiceFactory } from '../../../../common/logger/loggerServiceFactory.ts';
 import { createConfig, type Config } from '../../../../core/config.ts';
 import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { userSessions, users } from '../../../../infrastructure/database/schema.ts';
@@ -19,25 +19,18 @@ describe('LogoutUserAction', () => {
   let userSessionRepository: UserSessionRepositoryImpl;
   let loginUserAction: LoginUserAction;
   let logoutUserAction: LogoutUserAction;
-  let loggerService: LoggerService;
   let tokenService: TokenService;
   let passwordService: PasswordService;
   let config: Config;
 
   beforeEach(async () => {
     config = createConfig();
-    databaseClient = new DatabaseClient(config.database);
+    const loggerService = LoggerServiceFactory.create({ logLevel: 'silent' });
+    databaseClient = new DatabaseClient(config.database, loggerService);
     userRepository = new UserRepositoryImpl(databaseClient);
     userSessionRepository = new UserSessionRepositoryImpl(databaseClient);
     tokenService = new TokenService(config);
     passwordService = new PasswordService(config);
-
-    loggerService = {
-      debug: () => {},
-      info: () => {},
-      warn: () => {},
-      error: () => {},
-    } as unknown as LoggerService;
 
     loginUserAction = new LoginUserAction(
       userRepository,

@@ -1,24 +1,18 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-import * as schema from './schema.ts';
+import type { LoggerService } from '../../common/logger/loggerService.ts';
+import type { Config } from '../../core/config.ts';
 
-export interface DatabaseConfig {
-  readonly url: string;
-  readonly ssl: boolean;
-  readonly pool: {
-    readonly min: number;
-    readonly max: number;
-    readonly idleTimeoutMillis: number;
-    readonly connectionTimeoutMillis: number;
-  };
-}
+import * as schema from './schema.ts';
 
 export class DatabaseClient {
   private pool: Pool;
   public readonly db: ReturnType<typeof drizzle>;
+  private readonly loggerService: LoggerService;
 
-  public constructor(config: DatabaseConfig) {
+  public constructor(config: Config['database'], loggerService: LoggerService) {
+    this.loggerService = loggerService;
     this.pool = new Pool({
       connectionString: config.url,
       ssl: config.ssl
@@ -30,6 +24,30 @@ export class DatabaseClient {
       max: config.pool.max,
       idleTimeoutMillis: config.pool.idleTimeoutMillis,
       connectionTimeoutMillis: config.pool.connectionTimeoutMillis,
+      keepAlive: config.pool.keepAlive,
+      keepAliveInitialDelayMillis: config.pool.keepAliveInitialDelayMillis,
+    });
+
+    this.pool.on('error', (error) => {
+      this.loggerService.error({
+        message: 'Unexpected database pool error',
+        event: 'database.pool.error',
+        err: error,
+      });
+    });
+
+    this.pool.on('connect', () => {
+      this.loggerService.debug({
+        message: 'New database connection established',
+        event: 'database.connection.established',
+      });
+    });
+
+    this.pool.on('remove', () => {
+      this.loggerService.debug({
+        message: 'Database connection removed from pool',
+        event: 'database.connection.removed',
+      });
     });
 
     this.db = drizzle(this.pool, { schema });
@@ -40,11 +58,6 @@ export class DatabaseClient {
   }
 
   public async testConnection(): Promise<void> {
-    const client = await this.pool.connect();
-    try {
-      await client.query('SELECT 1');
-    } finally {
-      client.release();
-    }
+    await this.db.execute('SELECT 1');
   }
 }

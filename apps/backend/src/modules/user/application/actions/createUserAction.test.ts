@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 
 import { Generator } from '../../../../../tests/generator.ts';
 import { ResourceAlreadyExistsError } from '../../../../common/errors/resourceAlreadyExistsError.ts';
-import type { LoggerService } from '../../../../common/logger/loggerService.ts';
+import { LoggerServiceFactory } from '../../../../common/logger/loggerServiceFactory.ts';
 import { createConfig } from '../../../../core/config.ts';
 import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { users } from '../../../../infrastructure/database/schema.ts';
@@ -15,21 +15,14 @@ describe('CreateUserAction', () => {
   let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
   let createUserAction: CreateUserAction;
-  let loggerService: LoggerService;
   let passwordService: PasswordService;
 
   beforeEach(async () => {
     const config = createConfig();
-    databaseClient = new DatabaseClient(config.database);
+    const loggerService = LoggerServiceFactory.create({ logLevel: 'silent' });
+    databaseClient = new DatabaseClient(config.database, loggerService);
     userRepository = new UserRepositoryImpl(databaseClient);
     passwordService = new PasswordService(config);
-
-    loggerService = {
-      debug: () => {},
-      info: () => {},
-      warn: () => {},
-      error: () => {},
-    } as unknown as LoggerService;
 
     createUserAction = new CreateUserAction(userRepository, loggerService, passwordService);
 

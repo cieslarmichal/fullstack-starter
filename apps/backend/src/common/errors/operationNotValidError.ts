@@ -8,4 +8,8 @@ export class OperationNotValidError extends BaseError<Context> {
   public constructor(context: Context) {
     super('OperationNotValidError', 'Operation not valid.', context);
   }
+
+  protected override getExposableContextFields(): string[] {
+    return ['reason'];
+  }
 }

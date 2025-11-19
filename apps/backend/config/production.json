@@ -2,8 +2,10 @@
   "database": {
     "ssl": true,
     "pool": {
-      "min": 10,
-      "max": 100
+      "idleTimeoutMillis": 60000,
+      "connectionTimeoutMillis": 5000,
+      "keepAlive": true,
+      "keepAliveInitialDelayMillis": 10000
     }
   },
   "hashSaltRounds": 14,

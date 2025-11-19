@@ -14,6 +14,8 @@ const configSchema = Type.Object({
       max: Type.Number({ minimum: 10, maximum: 200 }),
       idleTimeoutMillis: Type.Number({ minimum: 10000, maximum: 120000 }),
       connectionTimeoutMillis: Type.Number({ minimum: 2000, maximum: 30000 }),
+      keepAlive: Type.Boolean(),
+      keepAliveInitialDelayMillis: Type.Number({ minimum: 0, maximum: 60000 }),
     }),
   }),
   cookie: Type.Object({ secret: Type.String({ minLength: 1 }) }),

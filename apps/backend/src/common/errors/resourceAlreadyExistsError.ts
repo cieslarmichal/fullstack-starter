@@ -8,4 +8,8 @@ export class ResourceAlreadyExistsError extends BaseError<Context> {
   public constructor(context: Context) {
     super('ResourceAlreadyExistsError', 'Resource already exists.', context);
   }
+
+  protected override getExposableContextFields(): string[] {
+    return ['resource'];
+  }
 }
