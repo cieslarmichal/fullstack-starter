@@ -57,10 +57,12 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     name: 'refresh-token',
     config: {
       httpOnly: true,
-      secure: appEnvironment !== 'development',
-      sameSite: appEnvironment === 'production' ? ('strict' as const) : ('none' as const),
+      secure: true,
+      sameSite: appEnvironment === 'production' ? ('lax' as const) : ('none' as const),
       path: '/',
       maxAge: config.token.refresh.expiresIn,
+      // TODO: adjust domain as needed
+      ...(appEnvironment === 'production' ? { domain: '.fullstack-starter.com' } : {}),
     },
   };
 
