@@ -9,15 +9,11 @@ interface LoggerServiceConfig {
 
 export class LoggerServiceFactory {
   public static create(config: LoggerServiceConfig): LoggerService {
-    const { req, res, err } = stdSerializers;
-
     const logger = pino({
       level: config.logLevel,
       base: null,
       serializers: {
-        req,
-        res,
-        err,
+        err: stdSerializers.err,
       },
     });
 
