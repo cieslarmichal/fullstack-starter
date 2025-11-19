@@ -10,14 +10,11 @@ export class Application {
 
   public static async start(): Promise<void> {
     const config = createConfig();
-
     const loggerService = LoggerServiceFactory.create({ logLevel: config.logLevel });
-
     this.databaseClient = new DatabaseClient(config.database, loggerService);
+    this.server = new HttpServer(config, loggerService, this.databaseClient);
 
     await this.databaseClient.testConnection();
-
-    this.server = new HttpServer(config, loggerService, this.databaseClient);
 
     await this.server.start();
   }
