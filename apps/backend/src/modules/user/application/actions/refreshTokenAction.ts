@@ -76,7 +76,7 @@ export class RefreshTokenAction {
           const existingSession = await this.userSessionRepository.findById(sessionId, tx);
 
           if (!existingSession || existingSession.status !== 'active') {
-            throw new UnauthorizedAccessError({ reason: 'Session not active' });
+            throw new UnauthorizedAccessError({ reason: 'Session not active', silent: true });
           }
 
           if (existingSession.currentRefreshHash === tokenHash) {
@@ -100,6 +100,7 @@ export class RefreshTokenAction {
             if (!accepted) {
               await this.userSessionRepository.revoke(sessionId, tx);
 
+              // This IS a security issue, so keep it logged (not silent)
               throw new UnauthorizedAccessError({ reason: 'Refresh token reuse detected' });
             }
           }

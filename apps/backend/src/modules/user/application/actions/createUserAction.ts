@@ -22,9 +22,9 @@ export class CreateUserAction {
   }
 
   public async execute(payload: CreateUserActionPayload, context: ExecutionContext): Promise<User> {
-    const { email: emailRaw, password } = payload;
+    const { email: emailInput, password } = payload;
 
-    const email = emailRaw.toLowerCase();
+    const email = emailInput.toLowerCase().trim();
 
     this.loggerService.debug({
       message: 'Creating user',

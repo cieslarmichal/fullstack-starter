@@ -6,5 +6,6 @@ declare module 'fastify' {
       userId: string;
       email: string;
     };
+    startTime?: number;
   }
 }

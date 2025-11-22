@@ -76,11 +76,13 @@ export class HttpServer {
         return;
       }
 
+      request.startTime = Date.now();
+
       const requestId = UuidService.generateUuid();
       request.id = requestId;
       reply.header('X-Request-ID', requestId);
 
-      this.loggerService.debug({
+      this.loggerService.info({
         message: 'Incoming HTTP request',
         event: 'http.request.start',
         requestId: request.id,
@@ -92,14 +94,14 @@ export class HttpServer {
     });
 
     this.fastifyServer.addHook('onSend', (request, reply, _payload, done) => {
-      reply.header('X-Content-Type-Options', 'nosniff');
-
       if (skipRequestLog(request)) {
         done();
         return;
       }
 
-      this.loggerService.debug({
+      const durationMs = request.startTime ? Date.now() - request.startTime : undefined;
+
+      this.loggerService.info({
         message: 'Request completed',
         event: 'http.request.end',
         requestId: request.id,
@@ -107,6 +109,7 @@ export class HttpServer {
         url: request.url,
         statusCode: reply.statusCode,
         userId: request.user?.userId,
+        durationMs,
       });
 
       done();
@@ -164,14 +167,19 @@ export class HttpServer {
 
     this.fastifyServer.setErrorHandler((error, request, reply) => {
       const requestId = request.id;
+      const baseContext = {
+        requestId,
+        method: request.method,
+        url: request.url,
+        userId: request.user?.userId,
+        ip: request.ip,
+      };
 
       if (error instanceof TypeError) {
         this.loggerService.error({
           message: 'HTTP request type error',
-          event: 'http.request.error',
-          requestId,
-          method: request.method,
-          url: request.url,
+          event: 'http.request.type_error',
+          ...baseContext,
           err: error,
         });
 
@@ -181,15 +189,11 @@ export class HttpServer {
         });
       }
 
-      if ('statusCode' in error && error.statusCode === 429) {
+      if (error instanceof Error && 'statusCode' in error && error.statusCode === 429) {
         this.loggerService.warn({
           message: 'Rate limit exceeded',
           event: 'http.request.rate_limited',
-          requestId,
-          method: request.method,
-          url: request.url,
-          ip: request.ip,
-          error: error.message,
+          ...baseContext,
         });
 
         return reply.status(429).send({
@@ -198,38 +202,81 @@ export class HttpServer {
         });
       }
 
-      this.loggerService.error({
-        message: 'HTTP request error',
-        event: 'http.request.error',
-        requestId,
-        method: request.method,
-        url: request.url,
-        err: error,
-      });
-
-      if (error instanceof InputNotValidError) {
-        return reply.status(400).send(error.toJSON());
-      }
-
-      if (error instanceof ResourceNotFoundError) {
-        return reply.status(404).send(error.toJSON());
-      }
-
-      if (error instanceof OperationNotValidError) {
-        return reply.status(400).send(error.toJSON());
-      }
-
-      if (error instanceof ResourceAlreadyExistsError) {
-        return reply.status(409).send(error.toJSON());
-      }
-
       if (error instanceof UnauthorizedAccessError) {
+        // Only log if not marked as silent (expected auth failures like missing refresh token)
+        if (!error.isSilent) {
+          this.loggerService.warn({
+            message: 'Unauthorized access attempt',
+            event: 'http.request.unauthorized',
+            ...baseContext,
+            errorContext: error.context,
+          });
+        }
+
         return reply.status(401).send(error.toJSON());
       }
 
       if (error instanceof ForbiddenAccessError) {
+        this.loggerService.warn({
+          message: 'Forbidden access attempt',
+          event: 'http.request.forbidden',
+          ...baseContext,
+          errorContext: error.context,
+        });
+
         return reply.status(403).send(error.toJSON());
       }
+
+      if (error instanceof InputNotValidError) {
+        this.loggerService.info({
+          message: 'Invalid input',
+          event: 'http.request.validation_error',
+          ...baseContext,
+          errorContext: error.context,
+        });
+
+        return reply.status(400).send(error.toJSON());
+      }
+
+      if (error instanceof OperationNotValidError) {
+        this.loggerService.info({
+          message: 'Invalid operation',
+          event: 'http.request.operation_error',
+          ...baseContext,
+          errorContext: error.context,
+        });
+
+        return reply.status(400).send(error.toJSON());
+      }
+
+      if (error instanceof ResourceNotFoundError) {
+        this.loggerService.info({
+          message: 'Resource not found',
+          event: 'http.request.not_found',
+          ...baseContext,
+          errorContext: error.context,
+        });
+
+        return reply.status(404).send(error.toJSON());
+      }
+
+      if (error instanceof ResourceAlreadyExistsError) {
+        this.loggerService.warn({
+          message: 'Resource conflict',
+          event: 'http.request.conflict',
+          ...baseContext,
+          errorContext: error.context,
+        });
+
+        return reply.status(409).send(error.toJSON());
+      }
+
+      this.loggerService.error({
+        message: 'Unexpected error',
+        event: 'http.request.unexpected_error',
+        ...baseContext,
+        err: error,
+      });
 
       return reply.status(500).send({
         name: 'InternalServerError',

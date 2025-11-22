@@ -40,7 +40,7 @@ export class LoginUserAction {
   }
 
   public async execute(loginData: LoginData, context: ExecutionContext): Promise<LoginResult> {
-    const normalizedEmail = loginData.email.toLowerCase();
+    const normalizedEmail = loginData.email.toLowerCase().trim();
 
     this.loggerService.debug({
       message: 'User login attempt',

@@ -2,6 +2,7 @@ import { type BaseErrorContext, BaseError } from './baseError.ts';
 
 interface Context extends BaseErrorContext {
   readonly reason: string;
+  readonly silent?: boolean; // If true, suppress warning logs (expected auth failures)
 }
 
 export class UnauthorizedAccessError extends BaseError<Context> {
@@ -11,5 +12,9 @@ export class UnauthorizedAccessError extends BaseError<Context> {
 
   protected override getExposableContextFields(): string[] {
     return ['reason'];
+  }
+
+  public get isSilent(): boolean {
+    return this.context.silent === true;
   }
 }

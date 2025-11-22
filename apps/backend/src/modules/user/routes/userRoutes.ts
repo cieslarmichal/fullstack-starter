@@ -192,6 +192,10 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     schema: {
       response: {
         200: refreshTokenResponseSchema,
+        401: Type.Object({
+          name: Type.String(),
+          message: Type.String(),
+        }),
       },
     },
     config: {
@@ -201,8 +205,11 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       const refreshToken = request.cookies[refreshTokenCookie.name];
 
       if (!refreshToken) {
-        throw new UnauthorizedAccessError({
-          reason: 'Refresh token cookie not found',
+        // Don't log this as an error - it's expected for unauthenticated users
+        // Just return 401 silently
+        return reply.status(401).send({
+          name: 'UnauthorizedAccessError',
+          message: 'Refresh token not found',
         });
       }
 
