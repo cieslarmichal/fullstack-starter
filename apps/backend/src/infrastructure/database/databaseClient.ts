@@ -24,14 +24,16 @@ export class DatabaseClient {
       max: config.pool.max,
       idleTimeoutMillis: config.pool.idleTimeoutMillis,
       connectionTimeoutMillis: config.pool.connectionTimeoutMillis,
-      keepAlive: config.pool.keepAlive,
-      keepAliveInitialDelayMillis: config.pool.keepAliveInitialDelayMillis,
+      maxLifetimeSeconds: config.pool.maxLifetimeSeconds,
     });
 
     this.pool.on('error', (error) => {
       this.loggerService.error({
         message: 'Unexpected database pool error',
         event: 'database.pool.error',
+        poolSize: this.pool.totalCount,
+        idleConnections: this.pool.idleCount,
+        waitingClients: this.pool.waitingCount,
         err: error,
       });
     });
