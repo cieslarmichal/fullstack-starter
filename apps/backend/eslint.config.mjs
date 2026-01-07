@@ -105,7 +105,7 @@ export default tseslint.config(
         'error',
         {
           groups: ['side-effect', ['builtin', 'external'], 'internal', ['parent'], ['sibling', 'index']],
-          newlinesBetween: 'always',
+          newlinesBetween: 'ignore',
           order: 'asc',
           type: 'natural',
         },

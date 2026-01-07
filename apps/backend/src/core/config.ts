@@ -1,6 +1,6 @@
-import { type Static, Type } from '@sinclair/typebox';
-import { TransformDecodeCheckError, Value } from '@sinclair/typebox/value';
 import config from 'config';
+import { type Static, Type } from 'typebox';
+import { DecodeError, Value } from 'typebox/value';
 
 import { ConfigurationError } from '../common/errors/configurationError.ts';
 import { type LogLevel, logLevels } from '../common/logger/logLevel.ts';
@@ -78,7 +78,7 @@ export function createConfig(): Config {
   try {
     return Value.Decode(configSchema, config);
   } catch (error) {
-    if (error instanceof TransformDecodeCheckError) {
+    if (error instanceof DecodeError) {
       throw new ConfigurationError({ originalError: error });
     }
 

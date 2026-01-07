@@ -9,11 +9,6 @@ export default mergeConfig(
     test: {
       include: ['**/*.test.ts'],
       pool: 'forks',
-      poolOptions: {
-        forks: {
-          singleFork: true,
-        },
-      },
       fileParallelism: false,
     },
   }),
