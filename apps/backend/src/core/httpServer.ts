@@ -19,10 +19,6 @@ import { userRoutes } from '../modules/user/routes/userRoutes.ts';
 
 import { type Config } from './config.ts';
 
-const maxObjectDepth = 10;
-const maxStringLength = 10000;
-const maxBodySize = 512 * 1024; // 512KB
-
 export class HttpServer {
   public readonly fastifyServer: FastifyInstance;
   private readonly loggerService: LoggerService;
@@ -35,7 +31,7 @@ export class HttpServer {
     this.databaseClient = databaseClient;
 
     this.fastifyServer = fastify({
-      bodyLimit: maxBodySize,
+      bodyLimit: 512 * 1024, // 512KB,
       logger: false,
       connectionTimeout: 30000, // 30s
       keepAliveTimeout: 5000, // 5s
@@ -113,32 +109,6 @@ export class HttpServer {
       });
 
       done();
-    });
-
-    this.fastifyServer.addHook('preHandler', async (request, reply) => {
-      if (
-        request.body &&
-        typeof request.body === 'object' &&
-        request.headers['content-type']?.includes('application/json')
-      ) {
-        try {
-          this.validateInputLimits(request.body, 0);
-        } catch (error) {
-          this.loggerService.warn({
-            message: 'Input sanitization failed',
-            event: 'http.request.input_sanitization_failed',
-            requestId: request.id,
-            method: request.method,
-            url: request.url,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          });
-
-          return reply.status(400).send({
-            name: 'InputNotValidError',
-            message: 'Invalid input: object too deep or string too long',
-          });
-        }
-      }
     });
 
     await this.registerRoutes();
@@ -283,30 +253,6 @@ export class HttpServer {
         message: 'Internal server error',
       });
     });
-  }
-
-  private validateInputLimits(obj: unknown, depth: number): void {
-    if (depth > maxObjectDepth) {
-      throw new Error(`Object nesting exceeds maximum depth of ${String(maxObjectDepth)}`);
-    }
-
-    if (Array.isArray(obj)) {
-      for (const item of obj) {
-        this.validateInputLimits(item, depth + 1);
-      }
-      return;
-    }
-
-    if (obj && typeof obj === 'object') {
-      for (const value of Object.values(obj as Record<string, unknown>)) {
-        this.validateInputLimits(value, depth + 1);
-      }
-      return;
-    }
-
-    if (typeof obj === 'string' && obj.length > maxStringLength) {
-      throw new Error(`String length exceeds maximum of ${String(maxStringLength)} characters`);
-    }
   }
 
   private async registerRoutes(): Promise<void> {
