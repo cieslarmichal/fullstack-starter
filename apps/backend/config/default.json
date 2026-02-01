@@ -12,6 +12,12 @@
       "keepAliveInitialDelayMillis": 5000
     }
   },
+  "aws": {
+    "accessKeyId": null,
+    "secretAccessKey": null,
+    "region": "eu-central-1",
+    "s3Bucket": "fullstack-starter-bucket"
+  },
   "cookie": {
     "secret": null
   },

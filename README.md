@@ -16,6 +16,10 @@ Modern React 19 with TypeScript, Tailwind CSS for styling, React Router for navi
 
 Type-safe database queries with Drizzle ORM, automatic migrations, connection pooling, and transaction support. Database schema defined in TypeScript with full type inference.
 
+### ☁️ AWS S3 Integration
+
+Seamless integration with AWS S3 for file storage. Upload, retrieve, and manage files with a simple and type-safe API.
+
 ### 🔐 Authentication Ready
 
 Complete authentication system with JWT access tokens, HTTP-only refresh tokens, bcrypt password hashing, secure cookie handling, and protected routes. Email verification and rate limiting included.

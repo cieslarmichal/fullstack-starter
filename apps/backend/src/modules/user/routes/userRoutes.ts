@@ -184,7 +184,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
       reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
 
-      return reply.status(204).send();
+      return reply.status(204).send(null);
     },
   });
 
@@ -281,7 +281,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
         userId,
       });
 
-      return reply.status(204).send();
+      return reply.status(204).send(null);
     },
   });
 };

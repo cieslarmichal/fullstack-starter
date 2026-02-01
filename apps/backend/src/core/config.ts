@@ -4,8 +4,16 @@ import { DecodeError, Value } from 'typebox/value';
 
 import { ConfigurationError } from '../common/errors/configurationError.ts';
 import { type LogLevel, logLevels } from '../common/logger/logLevel.ts';
+import { awsRegions, type AwsRegion } from '../common/s3/awsRegion.ts';
 
 const configSchema = Type.Object({
+  aws: Type.Object({
+    accessKeyId: Type.String({ minLength: 1 }),
+    secretAccessKey: Type.String({ minLength: 1 }),
+    region: Type.Union([...Object.values(awsRegions).map((region) => Type.Literal(region as AwsRegion))]),
+    endpoint: Type.Optional(Type.String({ minLength: 1 })),
+    s3Bucket: Type.String({ minLength: 1 }),
+  }),
   database: Type.Object({
     url: Type.String({ minLength: 1 }),
     ssl: Type.Boolean(),
