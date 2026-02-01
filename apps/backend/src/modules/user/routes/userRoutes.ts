@@ -126,7 +126,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     config: {
       rateLimit: config.rateLimit.profile,
     },
-    preHandler: [authenticationMiddleware],
+    preValidation: [authenticationMiddleware],
     handler: async (request, reply) => {
       if (!request.user) {
         throw new UnauthorizedAccessError({
@@ -266,7 +266,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     config: {
       rateLimit: config.rateLimit.accountDeletion,
     },
-    preHandler: [authenticationMiddleware],
+    preValidation: [authenticationMiddleware],
     handler: async (request, reply) => {
       if (!request.user) {
         throw new UnauthorizedAccessError({
