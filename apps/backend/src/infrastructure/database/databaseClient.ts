@@ -34,20 +34,6 @@ export class DatabaseClient {
       });
     });
 
-    this.pool.on('connect', () => {
-      this.loggerService.debug({
-        message: 'New database connection established',
-        event: 'database.connection.established',
-      });
-    });
-
-    this.pool.on('remove', () => {
-      this.loggerService.debug({
-        message: 'Database connection removed from pool',
-        event: 'database.connection.removed',
-      });
-    });
-
     this.db = drizzle(this.pool, { schema });
   }
 
