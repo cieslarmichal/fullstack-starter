@@ -20,6 +20,7 @@
     "@fastify/cookie": "11.0.2",
     "@fastify/cors": "11.2.0",
     "@fastify/rate-limit": "10.3.0",
+    "@fastify/multipart": "9.4.0",
     "@fastify/type-provider-typebox": "6.1.0",
     "bcrypt": "6.0.0",
     "config": "4.2.0",

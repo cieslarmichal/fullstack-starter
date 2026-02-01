@@ -1,5 +1,6 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
+import fastifyMultipart from '@fastify/multipart';
 import fastifyRateLimit from '@fastify/rate-limit';
 import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { fastify, type FastifyInstance, type FastifyRequest } from 'fastify';
@@ -58,6 +59,11 @@ export class HttpServer {
       max: this.config.rateLimit.global.max,
       timeWindow: this.config.rateLimit.global.timeWindow,
       keyGenerator: (request) => request.ip,
+    });
+    await this.fastifyServer.register(fastifyMultipart, {
+      limits: {
+        fileSize: 1024 * 1024 * 1024 * 4,
+      },
     });
 
     const skipRequestLog = (request: FastifyRequest): boolean => {
