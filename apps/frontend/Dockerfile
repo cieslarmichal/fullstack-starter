@@ -1,4 +1,4 @@
-FROM node:24.11.0-alpine AS base
+FROM node:25.5.0-alpine AS base
 
 RUN apk update && apk add --no-cache libc6-compat
 
@@ -9,7 +9,7 @@ FROM base AS pruner
 COPY package*.json turbo.json tsconfig.json ./
 COPY apps/ ./apps
 
-RUN npx turbo@2.5.8 prune --scope="@apps/frontend" --docker
+RUN npx turbo prune --scope="@apps/frontend" --docker
 
 FROM base AS installer
 

@@ -15,8 +15,8 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.980.0",
-    "@aws-sdk/lib-storage": "3.980.0",
+    "@aws-sdk/client-s3": "3.983.0",
+    "@aws-sdk/lib-storage": "3.983.0",
     "@fastify/cookie": "11.0.2",
     "@fastify/cors": "11.2.0",
     "@fastify/rate-limit": "10.3.0",
@@ -24,7 +24,7 @@
     "@fastify/type-provider-typebox": "6.1.0",
     "bcrypt": "6.0.0",
     "config": "4.2.0",
-    "fastify": "5.7.2",
+    "fastify": "5.7.4",
     "jsonwebtoken": "9.0.3",
     "pg": "8.18.0",
     "pino": "10.3.0",
