@@ -16,8 +16,3 @@ dist
 .tsbuildinfo
 
 .turbo
-
-# Playwright
-playwright-report
-test-results
-apps/frontend/playwright/.cache

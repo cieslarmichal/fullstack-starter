@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Facebook, Instagram } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -55,26 +55,6 @@ export default function Footer() {
                   className="hover:opacity-100 transition-opacity"
                 >
                   Cracow, Poland
-                </a>
-              </div>
-              <div className="flex items-center gap-4 pt-3">
-                <a
-                  href="https://facebook.com/fullstack-starter"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Facebook"
-                  className="opacity-80 hover:opacity-100 transition-opacity"
-                >
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a
-                  href="https://instagram.com/fullstack-starter"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  className="opacity-80 hover:opacity-100 transition-opacity"
-                >
-                  <Instagram className="h-5 w-5" />
                 </a>
               </div>
             </div>

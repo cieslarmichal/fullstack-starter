@@ -26,10 +26,7 @@ Complete authentication system with JWT access tokens, HTTP-only refresh tokens,
 
 ### ⚡ Testing Setup
 
-- **Unit Tests**: Vitest for both backend and frontend with comprehensive test utilities
-- **E2E Tests**: Playwright for end-to-end testing with Page Object Model pattern
-- **API Mocking**: MSW (Mock Service Worker) for reliable API mocking in tests
-- **Test Coverage**: Pre-configured test environments with proper setup and teardown
+- **Unit Tests**: Vitest for both backend comprehensive test utilities
 
 ### 📦 Monorepo Architecture
 
