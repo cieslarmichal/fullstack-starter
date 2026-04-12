@@ -44,7 +44,6 @@ export class LoginUserAction {
 
     this.loggerService.debug({
       message: 'User login attempt',
-      event: 'user.login.start',
       requestId: context.requestId,
       email: normalizedEmail,
     });
@@ -79,7 +78,6 @@ export class LoginUserAction {
 
     this.loggerService.info({
       message: 'User logged in successfully',
-      event: 'user.login.success',
       requestId: context.requestId,
       userId: user.id,
       email: user.email,

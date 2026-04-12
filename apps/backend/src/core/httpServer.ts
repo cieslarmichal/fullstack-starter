@@ -86,7 +86,6 @@ export class HttpServer {
 
       this.loggerService.info({
         message: 'Incoming HTTP request',
-        event: 'http.request.start',
         requestId: request.id,
         method: request.method,
         url: request.url,
@@ -105,7 +104,6 @@ export class HttpServer {
 
       this.loggerService.info({
         message: 'Request completed',
-        event: 'http.request.end',
         requestId: request.id,
         method: request.method,
         url: request.url,
@@ -154,7 +152,6 @@ export class HttpServer {
       if (error instanceof TypeError) {
         this.loggerService.error({
           message: 'HTTP request type error',
-          event: 'http.request.type_error',
           ...baseContext,
           err: error,
         });
@@ -168,7 +165,6 @@ export class HttpServer {
       if (error instanceof Error && 'statusCode' in error && error.statusCode === 429) {
         this.loggerService.warn({
           message: 'Rate limit exceeded',
-          event: 'http.request.rate_limited',
           ...baseContext,
         });
 
@@ -183,7 +179,6 @@ export class HttpServer {
         if (!error.isSilent) {
           this.loggerService.warn({
             message: 'Unauthorized access attempt',
-            event: 'http.request.unauthorized',
             ...baseContext,
             errorContext: error.context,
           });
@@ -195,7 +190,6 @@ export class HttpServer {
       if (error instanceof ForbiddenAccessError) {
         this.loggerService.warn({
           message: 'Forbidden access attempt',
-          event: 'http.request.forbidden',
           ...baseContext,
           errorContext: error.context,
         });
@@ -206,7 +200,6 @@ export class HttpServer {
       if (error instanceof InputNotValidError) {
         this.loggerService.info({
           message: 'Invalid input',
-          event: 'http.request.validation_error',
           ...baseContext,
           errorContext: error.context,
         });
@@ -217,7 +210,6 @@ export class HttpServer {
       if (error instanceof OperationNotValidError) {
         this.loggerService.info({
           message: 'Invalid operation',
-          event: 'http.request.operation_error',
           ...baseContext,
           errorContext: error.context,
         });
@@ -228,7 +220,6 @@ export class HttpServer {
       if (error instanceof ResourceNotFoundError) {
         this.loggerService.info({
           message: 'Resource not found',
-          event: 'http.request.not_found',
           ...baseContext,
           errorContext: error.context,
         });
@@ -239,7 +230,6 @@ export class HttpServer {
       if (error instanceof ResourceAlreadyExistsError) {
         this.loggerService.warn({
           message: 'Resource conflict',
-          event: 'http.request.conflict',
           ...baseContext,
           errorContext: error.context,
         });
@@ -249,7 +239,6 @@ export class HttpServer {
 
       this.loggerService.error({
         message: 'Unexpected error',
-        event: 'http.request.unexpected_error',
         ...baseContext,
         err: error,
       });
@@ -278,8 +267,7 @@ export class HttpServer {
       } catch (error) {
         this.loggerService.warn({
           message: 'Health check failed',
-          event: 'http.health_check.failed',
-          error: error instanceof Error ? error.message : 'Unknown error',
+          err: error,
         });
         return await reply.status(500).send({ status: 'unhealthy' });
       }

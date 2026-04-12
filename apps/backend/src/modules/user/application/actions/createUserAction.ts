@@ -28,7 +28,6 @@ export class CreateUserAction {
 
     this.loggerService.debug({
       message: 'Creating user',
-      event: 'user.create.start',
       requestId: context.requestId,
       email,
     });
@@ -54,7 +53,6 @@ export class CreateUserAction {
 
     this.loggerService.info({
       message: 'User created successfully',
-      event: 'user.create.success',
       requestId: context.requestId,
       userId: user.id,
       email: user.email,

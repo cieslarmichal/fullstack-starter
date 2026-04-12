@@ -19,7 +19,6 @@ export const finalErrorHandler = async (error: unknown, signal?: string): Promis
 
   fatalLogger.error({
     message: 'Application fatal error',
-    event: 'application.fatal_error',
     err: error,
     signal,
   });

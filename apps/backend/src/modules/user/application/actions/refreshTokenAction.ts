@@ -114,7 +114,6 @@ export class RefreshTokenAction {
 
       this.loggerService.info({
         message: 'Tokens refreshed successfully',
-        event: 'user.token.refresh.success',
         requestId: context.requestId,
         userId: user.id,
         email: user.email,
@@ -125,12 +124,11 @@ export class RefreshTokenAction {
 
       this.loggerService.error({
         message: 'Token refresh transaction failed',
-        event: 'user.token.refresh.transaction.failure',
         requestId: context.requestId,
         userId: user.id,
         email: user.email,
         transactionDuration: duration,
-        error: error instanceof Error ? error.message : String(error),
+        err: error,
       });
 
       throw error;
