@@ -122,12 +122,12 @@ export const apiRequest = async <T>(endpoint: string, options: ApiRequestConfig)
       const refreshResponse = await requestAccessTokenRefresh();
       response = await makeRequest(refreshResponse.accessToken);
     } catch (refreshError) {
-      throw new Error(`Authentication failed: ${String(refreshError)}`);
+      throw new Error(`Authentication failed: ${String(refreshError)}`, { cause: refreshError });
     }
   }
 
   if (!response.ok) {
-    let errorResponse: ErrorResponse | null = null;
+    let errorResponse: ErrorResponse | null;
 
     try {
       errorResponse = await response.json();
