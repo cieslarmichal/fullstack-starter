@@ -1,6 +1,5 @@
 {
   "database": {
-    "url": null,
     "ssl": false,
     "pool": {
       "min": 2,
@@ -13,13 +12,8 @@
     }
   },
   "aws": {
-    "accessKeyId": null,
-    "secretAccessKey": null,
     "region": "eu-central-1",
     "s3Bucket": "fullstack-starter-bucket"
-  },
-  "cookie": {
-    "secret": null
   },
   "frontendUrl": "http://localhost:5173",
   "hashSaltRounds": 12,
@@ -60,11 +54,9 @@
   },
   "token": {
     "access": {
-      "secret": null,
       "expiresIn": 600
     },
     "refresh": {
-      "secret": null,
       "expiresIn": 604800,
       "graceMs": 10000,
       "idempotencyMs": 3000

@@ -1,5 +1,5 @@
 import config from 'config';
-import { type Static, Type } from 'typebox';
+import { type Static, type TLiteral, Type } from 'typebox';
 import { DecodeError, Value } from 'typebox/value';
 
 import { ConfigurationError } from '../common/errors/configurationError.ts';
@@ -10,7 +10,9 @@ const configSchema = Type.Object({
   aws: Type.Object({
     accessKeyId: Type.String({ minLength: 1 }),
     secretAccessKey: Type.String({ minLength: 1 }),
-    region: Type.Union([...Object.values(awsRegions).map((region) => Type.Literal(region as AwsRegion))]),
+    region: Type.Union(
+      Object.values(awsRegions).map((value) => Type.Literal(value)) as [TLiteral<AwsRegion>, ...TLiteral<AwsRegion>[]],
+    ),
     endpoint: Type.Optional(Type.String({ minLength: 1 })),
     s3Bucket: Type.String({ minLength: 1 }),
   }),
@@ -30,7 +32,9 @@ const configSchema = Type.Object({
   cookie: Type.Object({ secret: Type.String({ minLength: 1 }) }),
   frontendUrl: Type.String({ minLength: 1 }),
   hashSaltRounds: Type.Number({ minimum: 10, maximum: 15 }),
-  logLevel: Type.Union([...Object.values(logLevels).map((level) => Type.Literal(level as LogLevel))]),
+  logLevel: Type.Union(
+    Object.values(logLevels).map((value) => Type.Literal(value)) as [TLiteral<LogLevel>, ...TLiteral<LogLevel>[]],
+  ),
   token: Type.Object({
     access: Type.Object({
       secret: Type.String({ minLength: 1 }),
@@ -87,7 +91,9 @@ export function createConfig(): Config {
     return Value.Decode(configSchema, config);
   } catch (error) {
     if (error instanceof DecodeError) {
-      throw new ConfigurationError({ originalError: error });
+      throw new ConfigurationError({
+        reason: error.cause.errors.map((e) => `${e.instancePath} ${e.message}`).join(', '),
+      });
     }
 
     throw error;

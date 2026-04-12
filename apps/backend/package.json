@@ -2,7 +2,6 @@
   "name": "@apps/backend",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
     "dev": "node --watch-path=./src --watch-path=./config src/index.ts",
     "build": "tsc --build tsconfig.prod.json",
     "build:dev": "tsc --build tsconfig.json",
@@ -15,29 +14,28 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.983.0",
-    "@aws-sdk/lib-storage": "3.983.0",
+    "@aws-sdk/client-s3": "3.1029.0",
+    "@aws-sdk/lib-storage": "3.1029.0",
     "@fastify/cookie": "11.0.2",
     "@fastify/cors": "11.2.0",
     "@fastify/rate-limit": "10.3.0",
-    "@fastify/multipart": "9.4.0",
+    "@fastify/multipart": "10.0.0",
     "@fastify/type-provider-typebox": "6.1.0",
     "bcrypt": "6.0.0",
-    "config": "4.2.0",
-    "fastify": "5.7.4",
+    "config": "4.4.1",
+    "fastify": "5.8.4",
     "jsonwebtoken": "9.0.3",
-    "pg": "8.18.0",
-    "pino": "10.3.0",
-    "typebox": "1.0.81",
+    "pg": "8.20.0",
+    "pino": "10.3.1",
+    "typebox": "1.1.23",
     "uuid": "13.0.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "10.2.0",
+    "@faker-js/faker": "10.4.0",
     "@types/bcrypt": "6.0.0",
-    "@types/config": "3.3.5",
     "@types/jsonwebtoken": "9.0.10",
-    "@types/pg": "8.16.0",
-    "@types/supertest": "6.0.3",
+    "@types/pg": "8.20.0",
+    "@types/supertest": "7.2.0",
     "supertest": "7.2.2"
   }
 }

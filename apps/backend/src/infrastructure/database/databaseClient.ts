@@ -26,12 +26,13 @@ export class DatabaseClient {
     this.pool.on('error', (error) => {
       this.loggerService.error({
         message: 'Unexpected database pool error',
-        event: 'database.pool.error',
         poolSize: this.pool.totalCount,
         idleConnections: this.pool.idleCount,
         waitingClients: this.pool.waitingCount,
         err: error,
       });
+
+      process.exit(1);
     });
 
     this.db = drizzle(this.pool, { schema });
