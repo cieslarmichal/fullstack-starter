@@ -27,6 +27,14 @@
     "accountDeletion": {
       "max": 2,
       "timeWindow": 3600000
+    },
+    "passwordReset": {
+      "max": 3,
+      "timeWindow": 600000
+    },
+    "uploadImage": {
+      "max": 10,
+      "timeWindow": 60000
     }
   },
   "logLevel": "info"

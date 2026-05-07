@@ -1,5 +1,6 @@
 import type { TokenService } from '../../../../common/auth/tokenService.ts';
 import { CryptoService } from '../../../../common/crypto/cryptoService.ts';
+import { AccountDisabledError } from '../../../../common/errors/accountDisabledError.ts';
 import { UnauthorizedAccessError } from '../../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import type { ExecutionContext } from '../../../../common/types/executionContext.ts';
@@ -54,6 +55,13 @@ export class RefreshTokenAction {
       throw new UnauthorizedAccessError({
         reason: 'User not found',
         userId: tokenPayload.userId,
+      });
+    }
+
+    if (user.isDeleted) {
+      throw new AccountDisabledError({
+        reason: 'User has been deleted',
+        userId: user.id,
       });
     }
 

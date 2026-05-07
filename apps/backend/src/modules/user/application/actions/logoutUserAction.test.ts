@@ -57,6 +57,7 @@ describe('LogoutUserAction', () => {
 
       const userData = Generator.userData({
         password: await passwordService.hashPassword(password),
+        isEmailVerified: true,
       });
 
       await userRepository.create(userData);

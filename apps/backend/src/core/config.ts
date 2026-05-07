@@ -6,6 +6,11 @@ import { ConfigurationError } from '../common/errors/configurationError.ts';
 import { type LogLevel, logLevels } from '../common/logger/logLevel.ts';
 import { awsRegions, type AwsRegion } from '../common/s3/awsRegion.ts';
 
+const emailTemplateSchema = Type.Object({
+  templateFile: Type.String({ minLength: 1 }),
+  subject: Type.String({ minLength: 1 }),
+});
+
 const configSchema = Type.Object({
   aws: Type.Object({
     accessKeyId: Type.String({ minLength: 1 }),
@@ -14,7 +19,7 @@ const configSchema = Type.Object({
       Object.values(awsRegions).map((value) => Type.Literal(value)) as [TLiteral<AwsRegion>, ...TLiteral<AwsRegion>[]],
     ),
     endpoint: Type.Optional(Type.String({ minLength: 1 })),
-    s3Bucket: Type.String({ minLength: 1 }),
+    bucketName: Type.String({ minLength: 1 }),
   }),
   database: Type.Object({
     url: Type.String({ minLength: 1 }),
@@ -35,6 +40,14 @@ const configSchema = Type.Object({
   logLevel: Type.Union(
     Object.values(logLevels).map((value) => Type.Literal(value)) as [TLiteral<LogLevel>, ...TLiteral<LogLevel>[]],
   ),
+  resend: Type.Object({
+    apiKey: Type.String({ minLength: 1 }),
+    fromEmail: Type.String({ minLength: 1 }),
+    emails: Type.Object({
+      verifyAccount: emailTemplateSchema,
+      resetPassword: emailTemplateSchema,
+    }),
+  }),
   token: Type.Object({
     access: Type.Object({
       secret: Type.String({ minLength: 1 }),
@@ -44,8 +57,13 @@ const configSchema = Type.Object({
       secret: Type.String({ minLength: 1 }),
       expiresIn: Type.Number({ minimum: 86400 }),
       graceMs: Type.Number({ minimum: 1000, maximum: 10000 }),
-      // Short client/API idempotency window for coalescing duplicate refresh requests
       idempotencyMs: Type.Number({ minimum: 100, maximum: 5000 }),
+    }),
+    accountVerification: Type.Object({
+      expiresIn: Type.Number({ minimum: 3600 }),
+    }),
+    resetPassword: Type.Object({
+      expiresIn: Type.Number({ minimum: 1800 }),
     }),
   }),
   server: Type.Object({
@@ -81,6 +99,22 @@ const configSchema = Type.Object({
       max: Type.Number({ minimum: 1 }),
       timeWindow: Type.Number({ minimum: 1000 }),
     }),
+    passwordReset: Type.Object({
+      max: Type.Number({ minimum: 1 }),
+      timeWindow: Type.Number({ minimum: 1000 }),
+    }),
+    uploadImage: Type.Object({
+      max: Type.Number({ minimum: 1 }),
+      timeWindow: Type.Number({ minimum: 1000 }),
+    }),
+  }),
+  image: Type.Object({
+    maxFileSizeBytes: Type.Number({ minimum: 1024 * 1024, maximum: 5 * 1024 * 1024 }),
+    allowedContentTypes: Type.Array(Type.String({ minLength: 1 })),
+  }),
+  jobs: Type.Object({
+    enabled: Type.Boolean(),
+    emailQueueName: Type.String({ minLength: 1 }),
   }),
 });
 

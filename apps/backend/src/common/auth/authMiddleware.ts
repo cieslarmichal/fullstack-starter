@@ -1,12 +1,23 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
+import { AccountDisabledError } from '../errors/accountDisabledError.ts';
 import { UnauthorizedAccessError } from '../errors/unathorizedAccessError.ts';
 
 import type { TokenService } from './tokenService.ts';
 
 export type AuthMiddleware = (request: FastifyRequest, _reply: FastifyReply) => Promise<void>;
 
-export function createAuthenticationMiddleware(tokenService: TokenService): AuthMiddleware {
+export interface UserAccountStatusReader {
+  getAccountStatus(userId: string): Promise<{
+    exists: boolean;
+    isDeleted: boolean;
+  }>;
+}
+
+export function createAuthenticationMiddleware(
+  tokenService: TokenService,
+  userRepository: UserAccountStatusReader,
+): AuthMiddleware {
   return async function (request: FastifyRequest, _reply: FastifyReply): Promise<void> {
     const authorizationHeader = request.headers.authorization;
 
@@ -25,6 +36,22 @@ export function createAuthenticationMiddleware(tokenService: TokenService): Auth
     }
 
     const tokenPayload = tokenService.verifyAccessToken(token);
+
+    const accountStatus = await userRepository.getAccountStatus(tokenPayload.userId);
+
+    if (!accountStatus.exists) {
+      throw new AccountDisabledError({
+        reason: 'Account does not exist',
+        userId: tokenPayload.userId,
+      });
+    }
+
+    if (accountStatus.isDeleted) {
+      throw new AccountDisabledError({
+        reason: 'Account has been deleted',
+        userId: tokenPayload.userId,
+      });
+    }
 
     request.user = {
       userId: tokenPayload.userId,

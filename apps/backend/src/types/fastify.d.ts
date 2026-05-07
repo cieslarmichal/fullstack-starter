@@ -1,5 +1,3 @@
-import type { UserRole } from '../common/types/userRole.ts';
-
 declare module 'fastify' {
   interface FastifyRequest {
     user?: {
@@ -9,3 +7,5 @@ declare module 'fastify' {
     startTime?: number;
   }
 }
+
+export {};

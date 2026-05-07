@@ -13,11 +13,24 @@
   },
   "aws": {
     "region": "eu-central-1",
-    "s3Bucket": "fullstack-starter-bucket"
+    "bucketName": "fullstack-starter-bucket"
   },
   "frontendUrl": "http://localhost:5173",
   "hashSaltRounds": 12,
   "logLevel": "debug",
+  "resend": {
+    "fromEmail": "Fullstack Starter <noreply@example.com>",
+    "emails": {
+      "verifyAccount": {
+        "templateFile": "verifyAccount.html",
+        "subject": "Confirm your email address"
+      },
+      "resetPassword": {
+        "templateFile": "resetPassword.html",
+        "subject": "Reset your password"
+      }
+    }
+  },
   "server": {
     "host": "0.0.0.0",
     "port": 5000
@@ -50,6 +63,14 @@
     "accountDeletion": {
       "max": 3,
       "timeWindow": 3600000
+    },
+    "passwordReset": {
+      "max": 5,
+      "timeWindow": 600000
+    },
+    "uploadImage": {
+      "max": 20,
+      "timeWindow": 60000
     }
   },
   "token": {
@@ -60,6 +81,20 @@
       "expiresIn": 604800,
       "graceMs": 10000,
       "idempotencyMs": 3000
+    },
+    "accountVerification": {
+      "expiresIn": 86400
+    },
+    "resetPassword": {
+      "expiresIn": 3600
     }
+  },
+  "image": {
+    "maxFileSizeBytes": 3145728,
+    "allowedContentTypes": ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+  },
+  "jobs": {
+    "enabled": true,
+    "emailQueueName": "send-email"
   }
 }

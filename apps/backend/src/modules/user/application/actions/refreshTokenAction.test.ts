@@ -64,7 +64,10 @@ describe('RefreshTokenAction', () => {
       const password = Generator.password();
       const context = Generator.executionContext();
 
-      const userData = Generator.userData({ password: await passwordService.hashPassword(password) });
+      const userData = Generator.userData({
+        password: await passwordService.hashPassword(password),
+        isEmailVerified: true,
+      });
 
       await userRepository.create(userData);
 

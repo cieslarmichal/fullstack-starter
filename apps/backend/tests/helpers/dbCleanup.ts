@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import type { DatabaseClient } from '../../src/infrastructure/database/databaseClient.ts';
 
 export async function truncateTables(databaseClient: DatabaseClient): Promise<void> {
-  const tables = ['users', 'user_sessions'];
+  const tables = ['one_time_tokens', 'user_sessions', 'users'];
 
   for (const table of tables) {
     await databaseClient.db.execute(sql.raw(`TRUNCATE TABLE "${table}" CASCADE`));

@@ -53,7 +53,10 @@ describe('LoginUserAction', () => {
       const password = Generator.password();
       const context = Generator.executionContext();
 
-      const userData = Generator.userData({ password: await passwordService.hashPassword(password) });
+      const userData = Generator.userData({
+        password: await passwordService.hashPassword(password),
+        isEmailVerified: true,
+      });
 
       const user = await userRepository.create(userData);
 
@@ -92,7 +95,10 @@ describe('LoginUserAction', () => {
     });
 
     it('throws UnauthorizedAccessError when password is incorrect', async () => {
-      const userData = Generator.userData({ password: await passwordService.hashPassword(Generator.password()) });
+      const userData = Generator.userData({
+        password: await passwordService.hashPassword(Generator.password()),
+        isEmailVerified: true,
+      });
       const context = Generator.executionContext();
 
       await userRepository.create(userData);

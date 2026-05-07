@@ -1,9 +1,17 @@
 {
+  "aws": {
+    "accessKeyId": "test",
+    "secretAccessKey": "test",
+    "endpoint": "http://127.0.0.1:4566"
+  },
   "database": {
     "url": "postgres://postgres:postgres@localhost:5432/postgres"
   },
   "cookie": {
     "secret": "12345678901a"
+  },
+  "resend": {
+    "apiKey": "dummy-resend-key"
   },
   "token": {
     "access": {

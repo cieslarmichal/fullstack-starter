@@ -3,7 +3,7 @@ import { CryptoService } from '../../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../../common/logger/loggerService.ts';
 import type { ExecutionContext } from '../../../../common/types/executionContext.ts';
-import { UuidService } from '../../../../common/uuid/uuidService.ts';
+import { IdService } from '../../../../common/id/idService.ts';
 import type { UserRepository } from '../../domain/repositories/userRepository.ts';
 import type { UserSessionRepository } from '../../domain/repositories/userSessionRepository.ts';
 import type { PasswordService } from '../services/passwordService.ts';
@@ -57,6 +57,20 @@ export class LoginUserAction {
       });
     }
 
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedAccessError({
+        reason: 'User email is not verified.',
+        email: normalizedEmail,
+      });
+    }
+
+    if (user.isDeleted) {
+      throw new UnauthorizedAccessError({
+        reason: 'User account is deleted.',
+        email: normalizedEmail,
+      });
+    }
+
     const isPasswordValid = await this.passwordService.comparePasswords(loginData.password, user.password);
 
     if (!isPasswordValid) {
@@ -66,7 +80,7 @@ export class LoginUserAction {
       });
     }
 
-    const sessionId = UuidService.generateUuid();
+    const sessionId = IdService.generateUuid();
     const accessPayload = { userId: user.id, email: user.email };
     const refreshPayload = { userId: user.id, email: user.email, sessionId };
 

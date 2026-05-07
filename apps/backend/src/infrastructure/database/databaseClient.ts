@@ -13,6 +13,7 @@ export class DatabaseClient {
 
   public constructor(config: Config['database'], loggerService: LoggerService) {
     this.loggerService = loggerService;
+
     this.pool = new Pool({
       connectionString: config.url,
       ssl: config.ssl
@@ -32,7 +33,10 @@ export class DatabaseClient {
         err: error,
       });
 
-      process.exit(1);
+      if (this.pool.totalCount === 0) {
+        this.loggerService.error({ message: 'Database pool is empty after error, restarting process' });
+        process.exit(1);
+      }
     });
 
     this.db = drizzle(this.pool, { schema });
@@ -44,5 +48,12 @@ export class DatabaseClient {
 
   public async testConnection(): Promise<void> {
     await this.db.execute('SELECT 1');
+  }
+
+  public async transaction<T>(
+    callback: Parameters<typeof this.db.transaction<T>>[0],
+    options?: Parameters<typeof this.db.transaction<T>>[1],
+  ): Promise<T> {
+    return this.db.transaction<T>(callback, options);
   }
 }

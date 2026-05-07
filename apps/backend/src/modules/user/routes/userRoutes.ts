@@ -6,24 +6,37 @@ import { CryptoService } from '../../../common/crypto/cryptoService.ts';
 import { UnauthorizedAccessError } from '../../../common/errors/unathorizedAccessError.ts';
 import type { LoggerService } from '../../../common/logger/loggerService.ts';
 import type { Config } from '../../../core/config.ts';
+import type { EmailQueueService } from '../../../core/emailQueueService.ts';
 import type { DatabaseClient } from '../../../infrastructure/database/databaseClient.ts';
+import { ChangePasswordByTokenAction } from '../application/actions/changePasswordByTokenAction.ts';
 import { CreateUserAction } from '../application/actions/createUserAction.ts';
 import { DeleteUserAction } from '../application/actions/deleteUserAction.ts';
 import { FindUserAction } from '../application/actions/findUserAction.ts';
 import { LoginUserAction } from '../application/actions/loginUserAction.ts';
 import { LogoutUserAction } from '../application/actions/logoutUserAction.ts';
 import { RefreshTokenAction } from '../application/actions/refreshTokenAction.ts';
+import { ResendVerificationEmailAction } from '../application/actions/resendVerificationEmailAction.ts';
+import { SendResetPasswordEmailAction } from '../application/actions/sendResetPasswordEmailAction.ts';
+import { ValidateOneTimeTokenAction } from '../application/actions/validateOneTimeTokenAction.ts';
+import { VerifyUserEmailAction } from '../application/actions/verifyUserEmailAction.ts';
 import { PasswordService } from '../application/services/passwordService.ts';
 import type { User } from '../domain/types/user.ts';
+import { OneTimeTokenRepositoryImpl } from '../infrastructure/repositories/oneTimeTokenRepositoryImpl.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
 import { UserSessionRepositoryImpl } from '../infrastructure/repositories/userSessionRepositoryImpl.ts';
 
 import {
+  changePasswordByTokenRequestSchema,
   loginRequestSchema,
   loginResponseSchema,
   refreshTokenResponseSchema,
   registerRequestSchema,
+  resendVerificationRequestSchema,
+  sendResetPasswordEmailRequestSchema,
   userSchema,
+  validateOneTimeTokenRequestSchema,
+  validateOneTimeTokenResponseSchema,
+  verifyEmailRequestSchema,
   type UserDto,
 } from './userSchemas.ts';
 
@@ -34,10 +47,11 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
   config: Config;
   loggerService: LoggerService;
   tokenService: TokenService;
+  emailQueueService: EmailQueueService;
 }> = async function (fastify, opts) {
-  const { config, databaseClient, loggerService, tokenService } = opts;
+  const { config, databaseClient, loggerService, tokenService, emailQueueService } = opts;
 
-  // Idempotency window and single-flight coordination for refresh calls
+  // Idempotency window and single-flight coordination for refresh calls.
   // Keyed by refresh token hash to avoid storing sensitive data.
   const inFlightRefreshes = new Map<string, Promise<{ accessToken: string; refreshToken: string }>>();
   const recentRefreshes = new Map<
@@ -49,6 +63,8 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     return {
       id: user.id,
       email: user.email,
+      isEmailVerified: user.isEmailVerified,
+      isDeleted: user.isDeleted,
       createdAt: user.createdAt.toISOString(),
     };
   };
@@ -61,18 +77,27 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       sameSite: appEnvironment === 'production' ? ('lax' as const) : ('none' as const),
       path: '/',
       maxAge: config.token.refresh.expiresIn,
-      // TODO: adjust domain as needed
+      // TODO: adjust domain as needed for production
       ...(appEnvironment === 'production' ? { domain: '.fullstack-starter.com' } : {}),
     },
   };
 
   const userRepository = new UserRepositoryImpl(databaseClient);
   const userSessionRepository = new UserSessionRepositoryImpl(databaseClient);
+  const oneTimeTokenRepository = new OneTimeTokenRepositoryImpl(databaseClient);
   const passwordService = new PasswordService(config);
 
-  const createUserAction = new CreateUserAction(userRepository, loggerService, passwordService);
+  const createUserAction = new CreateUserAction(
+    userRepository,
+    oneTimeTokenRepository,
+    loggerService,
+    passwordService,
+    emailQueueService,
+    config,
+    databaseClient,
+  );
   const findUserAction = new FindUserAction(userRepository);
-  const deleteUserAction = new DeleteUserAction(userRepository, loggerService);
+  const deleteUserAction = new DeleteUserAction(userRepository, loggerService, databaseClient);
   const loginUserAction = new LoginUserAction(
     userRepository,
     loggerService,
@@ -89,8 +114,42 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     databaseClient,
   );
   const logoutUserAction = new LogoutUserAction(userSessionRepository, tokenService);
+  const verifyUserEmailAction = new VerifyUserEmailAction(
+    userRepository,
+    loggerService,
+    oneTimeTokenRepository,
+    databaseClient,
+  );
+  const resendVerificationEmailAction = new ResendVerificationEmailAction(
+    userRepository,
+    loggerService,
+    config,
+    emailQueueService,
+    oneTimeTokenRepository,
+    databaseClient,
+  );
+  const sendResetPasswordEmailAction = new SendResetPasswordEmailAction(
+    userRepository,
+    loggerService,
+    config,
+    emailQueueService,
+    oneTimeTokenRepository,
+    databaseClient,
+  );
+  const changePasswordByTokenAction = new ChangePasswordByTokenAction(
+    userRepository,
+    loggerService,
+    passwordService,
+    oneTimeTokenRepository,
+    databaseClient,
+  );
+  const validateOneTimeTokenAction = new ValidateOneTimeTokenAction(
+    userRepository,
+    loggerService,
+    oneTimeTokenRepository,
+  );
 
-  const authenticationMiddleware = createAuthenticationMiddleware(tokenService);
+  const authenticationMiddleware = createAuthenticationMiddleware(tokenService, userRepository);
 
   fastify.post('/users/register', {
     schema: {
@@ -205,8 +264,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       const refreshToken = request.cookies[refreshTokenCookie.name];
 
       if (!refreshToken) {
-        // Don't log this as an error - it's expected for unauthenticated users
-        // Just return 401 silently
+        // Expected for unauthenticated users — return 401 silently.
         return reply.status(401).send({
           name: 'UnauthorizedAccessError',
           message: 'Refresh token not found',
@@ -215,7 +273,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
       const tokenHash = CryptoService.hashData(refreshToken);
 
-      // Short-circuit for very recent duplicate refresh attempts (e.g., rapid page reloads)
+      // Short-circuit for very recent duplicate refresh attempts (e.g., rapid page reloads).
       const recent = recentRefreshes.get(tokenHash);
       const now = Date.now();
       if (recent && now - recent.timestamp <= config.token.refresh.idempotencyMs) {
@@ -223,7 +281,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
         return reply.send({ accessToken: recent.result.accessToken });
       }
 
-      // Ensure single-flight per tokenHash
+      // Single-flight per tokenHash to coalesce concurrent duplicate refreshes.
       let promise = inFlightRefreshes.get(tokenHash);
       if (!promise) {
         promise = refreshTokenAction.execute(
@@ -239,10 +297,8 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       try {
         result = await promise;
 
-        // Cache result briefly for idempotency window
         recentRefreshes.set(tokenHash, { result, timestamp: now });
 
-        // Opportunistic cleanup of stale recent entries
         for (const [key, entry] of recentRefreshes) {
           if (now - entry.timestamp > config.token.refresh.idempotencyMs) {
             recentRefreshes.delete(key);
@@ -281,7 +337,97 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
         userId,
       });
 
+      reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
+
       return reply.status(204).send(null);
+    },
+  });
+
+  fastify.post('/users/verify-email', {
+    schema: {
+      body: verifyEmailRequestSchema,
+      response: {
+        204: Type.Null(),
+      },
+    },
+    handler: async (request, reply) => {
+      await verifyUserEmailAction.execute(
+        { emailVerificationToken: request.body.token },
+        { requestId: request.id },
+      );
+
+      return reply.status(204).send(null);
+    },
+  });
+
+  fastify.post('/users/resend-verification', {
+    schema: {
+      body: resendVerificationRequestSchema,
+      response: {
+        204: Type.Null(),
+      },
+    },
+    config: {
+      rateLimit: config.rateLimit.passwordReset,
+    },
+    handler: async (request, reply) => {
+      await resendVerificationEmailAction.execute({ email: request.body.email }, { requestId: request.id });
+
+      return reply.status(204).send(null);
+    },
+  });
+
+  fastify.post('/users/send-reset-password-email', {
+    schema: {
+      body: sendResetPasswordEmailRequestSchema,
+      response: {
+        204: Type.Null(),
+      },
+    },
+    config: {
+      rateLimit: config.rateLimit.passwordReset,
+    },
+    handler: async (request, reply) => {
+      await sendResetPasswordEmailAction.execute({ email: request.body.email }, { requestId: request.id });
+
+      return reply.status(204).send(null);
+    },
+  });
+
+  fastify.post('/users/change-password-by-token', {
+    schema: {
+      body: changePasswordByTokenRequestSchema,
+      response: {
+        204: Type.Null(),
+      },
+    },
+    config: {
+      rateLimit: config.rateLimit.passwordReset,
+    },
+    handler: async (request, reply) => {
+      await changePasswordByTokenAction.execute(
+        { token: request.body.token, newPassword: request.body.newPassword },
+        { requestId: request.id },
+      );
+
+      return reply.status(204).send(null);
+    },
+  });
+
+  fastify.post('/users/validate-one-time-token', {
+    schema: {
+      body: validateOneTimeTokenRequestSchema,
+      response: {
+        200: validateOneTimeTokenResponseSchema,
+      },
+    },
+    handler: async (request, reply) => {
+      const valid = await validateOneTimeTokenAction.execute({
+        token: request.body.token,
+        purpose: request.body.purpose,
+      });
+
+      return reply.send({ valid });
     },
   });
 };

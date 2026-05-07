@@ -22,7 +22,7 @@ describe('DeleteUserAction', () => {
     databaseClient = new DatabaseClient(config.database, loggerService);
     userRepository = new UserRepositoryImpl(databaseClient);
 
-    deleteUserAction = new DeleteUserAction(userRepository, loggerService);
+    deleteUserAction = new DeleteUserAction(userRepository, loggerService, databaseClient);
 
     await databaseClient.db.delete(users);
   });
@@ -41,7 +41,9 @@ describe('DeleteUserAction', () => {
       await deleteUserAction.execute(user.id, context);
 
       const deletedUser = await userRepository.findById(user.id);
-      expect(deletedUser).toBeNull();
+      expect(deletedUser).not.toBeNull();
+      expect(deletedUser?.isDeleted).toBe(true);
+      expect(deletedUser?.email).toBe(`deleted-${user.id}@anonymous.local`);
     });
 
     it('throws ResourceNotFoundError when user does not exist', async () => {

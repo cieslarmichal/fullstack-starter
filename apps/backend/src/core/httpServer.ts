@@ -7,36 +7,52 @@ import { fastify, type FastifyInstance, type FastifyRequest } from 'fastify';
 import type { FastifySchemaValidationError } from 'fastify/types/schema.js';
 
 import { TokenService } from '../common/auth/tokenService.ts';
+import { AccountDisabledError } from '../common/errors/accountDisabledError.ts';
+import { ExternalServiceError } from '../common/errors/externalServiceError.ts';
 import { ForbiddenAccessError } from '../common/errors/forbiddenAccessError.ts';
 import { InputNotValidError } from '../common/errors/inputNotValidError.ts';
 import { OperationNotValidError } from '../common/errors/operationNotValidError.ts';
 import { ResourceAlreadyExistsError } from '../common/errors/resourceAlreadyExistsError.ts';
 import { ResourceNotFoundError } from '../common/errors/resourceNotFoundError.ts';
 import { UnauthorizedAccessError } from '../common/errors/unathorizedAccessError.ts';
+import { IdService } from '../common/id/idService.ts';
+import { ImageOptimizationService } from '../common/imageOptimization/imageOptimizationService.ts';
 import { type LoggerService } from '../common/logger/loggerService.ts';
-import { UuidService } from '../common/uuid/uuidService.ts';
+import { S3ClientFactory, type S3Config } from '../common/s3/s3ClientFactory.ts';
+import { S3Service } from '../common/s3/s3Service.ts';
 import type { DatabaseClient } from '../infrastructure/database/databaseClient.ts';
+import { imageRoutes } from '../modules/image/imageRoutes.ts';
 import { userRoutes } from '../modules/user/routes/userRoutes.ts';
 
 import { type Config } from './config.ts';
+import type { EmailQueueService } from './emailQueueService.ts';
+
+const maxBodySize = 10 * 1024 * 1024; // 10MB
 
 export class HttpServer {
   public readonly fastifyServer: FastifyInstance;
   private readonly loggerService: LoggerService;
   private readonly config: Config;
   private readonly databaseClient: DatabaseClient;
+  private readonly emailQueueService: EmailQueueService;
 
-  public constructor(config: Config, loggerService: LoggerService, databaseClient: DatabaseClient) {
+  public constructor(
+    config: Config,
+    loggerService: LoggerService,
+    databaseClient: DatabaseClient,
+    emailQueueService: EmailQueueService,
+  ) {
     this.config = config;
     this.loggerService = loggerService;
     this.databaseClient = databaseClient;
+    this.emailQueueService = emailQueueService;
 
     this.fastifyServer = fastify({
-      bodyLimit: 512 * 1024, // 512KB,
+      bodyLimit: maxBodySize,
       logger: false,
-      connectionTimeout: 30000, // 30s
-      keepAliveTimeout: 5000, // 5s
-      requestTimeout: 30000, // 30s
+      connectionTimeout: 30000,
+      keepAliveTimeout: 5000,
+      requestTimeout: 30000,
       trustProxy: true,
     }).withTypeProvider<TypeBoxTypeProvider>();
   }
@@ -54,22 +70,27 @@ export class HttpServer {
       allowedHeaders: ['Content-Type', 'Authorization'],
       exposedHeaders: ['X-Request-ID'],
     });
+    await this.fastifyServer.register(fastifyMultipart, { limits: { fileSize: 1024 * 1024 * 1024 * 4 } });
     await this.fastifyServer.register(fastifyRateLimit, {
       global: true,
       max: this.config.rateLimit.global.max,
       timeWindow: this.config.rateLimit.global.timeWindow,
       keyGenerator: (request) => request.ip,
     });
-    await this.fastifyServer.register(fastifyMultipart, {
-      limits: {
-        fileSize: 1024 * 1024 * 1024 * 4,
-      },
-    });
+
+    const noiseUrlPatterns = [
+      /^\/robots\.txt(\?|$)/,
+      /^\/favicon\.ico(\?|$)/,
+      /^\/apple-touch-icon[\w-]*\.png(\?|$)/,
+      /^\/\.well-known\//,
+      /^\/wp-(admin|login|content|includes)/,
+    ];
 
     const skipRequestLog = (request: FastifyRequest): boolean => {
       const isOptions = request.method === 'OPTIONS';
       const isHealth = request.url.includes('/health');
-      return isOptions || isHealth;
+      const isNoise = noiseUrlPatterns.some((pattern) => pattern.test(request.url));
+      return isOptions || isHealth || isNoise;
     };
 
     this.fastifyServer.addHook('onRequest', (request, reply, done) => {
@@ -80,7 +101,7 @@ export class HttpServer {
 
       request.startTime = Date.now();
 
-      const requestId = UuidService.generateUuid();
+      const requestId = IdService.generateUuid();
       request.id = requestId;
       reply.header('X-Request-ID', requestId);
 
@@ -119,7 +140,7 @@ export class HttpServer {
 
     await this.fastifyServer.listen({ port, host });
 
-    this.loggerService.info({ message: 'HTTP server started', port, host });
+    this.loggerService.info({ message: 'HTTP Server started', port, host });
   }
 
   public async stop(): Promise<void> {
@@ -175,7 +196,6 @@ export class HttpServer {
       }
 
       if (error instanceof UnauthorizedAccessError) {
-        // Only log if not marked as silent (expected auth failures like missing refresh token)
         if (!error.isSilent) {
           this.loggerService.warn({
             message: 'Unauthorized access attempt',
@@ -185,6 +205,18 @@ export class HttpServer {
         }
 
         return reply.status(401).send(error.toJSON());
+      }
+
+      if (error instanceof AccountDisabledError) {
+        this.loggerService.warn({
+          message: 'Account disabled access attempt',
+          ...baseContext,
+          errorContext: error.context,
+        });
+
+        reply.clearCookie('refresh-token', { path: '/' });
+
+        return reply.status(403).send(error.toJSON());
       }
 
       if (error instanceof ForbiddenAccessError) {
@@ -237,6 +269,16 @@ export class HttpServer {
         return reply.status(409).send(error.toJSON());
       }
 
+      if (error instanceof ExternalServiceError) {
+        this.loggerService.error({
+          message: 'External service error',
+          ...baseContext,
+          err: error,
+        });
+
+        return reply.status(502).send(error.toJSON());
+      }
+
       this.loggerService.error({
         message: 'Unexpected error',
         ...baseContext,
@@ -253,11 +295,31 @@ export class HttpServer {
   private async registerRoutes(): Promise<void> {
     const tokenService = new TokenService(this.config);
 
+    const s3Config: S3Config = {
+      accessKeyId: this.config.aws.accessKeyId,
+      secretAccessKey: this.config.aws.secretAccessKey,
+      region: this.config.aws.region,
+      endpoint: this.config.aws.endpoint ?? undefined,
+    };
+    const s3Client = S3ClientFactory.create(s3Config);
+    const s3Service = new S3Service(s3Client);
+    const imageOptimizationService = new ImageOptimizationService();
+
+    await this.fastifyServer.register(imageRoutes, {
+      databaseClient: this.databaseClient,
+      s3Service,
+      loggerService: this.loggerService,
+      config: this.config,
+      tokenService,
+      imageOptimizationService,
+    });
+
     await this.fastifyServer.register(userRoutes, {
       databaseClient: this.databaseClient,
       config: this.config,
       loggerService: this.loggerService,
       tokenService,
+      emailQueueService: this.emailQueueService,
     });
 
     this.fastifyServer.get('/health', async (_request, reply) => {

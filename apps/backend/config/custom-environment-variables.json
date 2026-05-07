@@ -10,6 +10,9 @@
   "cookie": {
     "secret": "COOKIE_SECRET"
   },
+  "resend": {
+    "apiKey": "RESEND_API_KEY"
+  },
   "token": {
     "access": {
       "secret": "ACCESS_TOKEN_SECRET"

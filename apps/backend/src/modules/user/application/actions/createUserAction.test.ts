@@ -4,8 +4,10 @@ import { Generator } from '../../../../../tests/generator.ts';
 import { ResourceAlreadyExistsError } from '../../../../common/errors/resourceAlreadyExistsError.ts';
 import { LoggerServiceFactory } from '../../../../common/logger/loggerServiceFactory.ts';
 import { createConfig } from '../../../../core/config.ts';
+import type { EmailQueueService } from '../../../../core/emailQueueService.ts';
 import { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
-import { users } from '../../../../infrastructure/database/schema.ts';
+import { oneTimeTokens, users } from '../../../../infrastructure/database/schema.ts';
+import { OneTimeTokenRepositoryImpl } from '../../infrastructure/repositories/oneTimeTokenRepositoryImpl.ts';
 import { UserRepositoryImpl } from '../../infrastructure/repositories/userRepositoryImpl.ts';
 import { PasswordService } from '../services/passwordService.ts';
 
@@ -14,27 +16,49 @@ import { CreateUserAction } from './createUserAction.ts';
 describe('CreateUserAction', () => {
   let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
+  let oneTimeTokenRepository: OneTimeTokenRepositoryImpl;
   let createUserAction: CreateUserAction;
   let passwordService: PasswordService;
+  let queuedEmails: { recipient: string; templateName: string }[];
 
   beforeEach(async () => {
     const config = createConfig();
     const loggerService = LoggerServiceFactory.create({ logLevel: 'silent' });
     databaseClient = new DatabaseClient(config.database, loggerService);
     userRepository = new UserRepositoryImpl(databaseClient);
+    oneTimeTokenRepository = new OneTimeTokenRepositoryImpl(databaseClient);
     passwordService = new PasswordService(config);
 
-    createUserAction = new CreateUserAction(userRepository, loggerService, passwordService);
+    queuedEmails = [];
+    const emailQueueService = {
+      queueEmail: async (recipient: string, template: { name: string }): Promise<void> => {
+        queuedEmails.push({ recipient, templateName: template.name });
+      },
+      start: async (): Promise<void> => {},
+      stop: async (): Promise<void> => {},
+    } as unknown as EmailQueueService;
 
+    createUserAction = new CreateUserAction(
+      userRepository,
+      oneTimeTokenRepository,
+      loggerService,
+      passwordService,
+      emailQueueService,
+      config,
+      databaseClient,
+    );
+
+    await databaseClient.db.delete(oneTimeTokens);
     await databaseClient.db.delete(users);
   });
   afterEach(async () => {
+    await databaseClient.db.delete(oneTimeTokens);
     await databaseClient.db.delete(users);
     await databaseClient.close();
   });
 
   describe('execute', () => {
-    it('creates a new user successfully', async () => {
+    it('creates a new user successfully and queues a verification email', async () => {
       const userData = Generator.userData();
       const context = Generator.executionContext();
 
@@ -43,6 +67,8 @@ describe('CreateUserAction', () => {
       expect(result).toBeDefined();
       expect(result.id).toBeDefined();
       expect(result.email).toBe(userData.email);
+      expect(result.isEmailVerified).toBe(false);
+      expect(result.isDeleted).toBe(false);
       expect(result.createdAt).toBeDefined();
 
       expect(result.password).not.toBe(userData.password);
@@ -52,6 +78,10 @@ describe('CreateUserAction', () => {
       const storedUser = await userRepository.findById(result.id);
       expect(storedUser).toBeDefined();
       expect(storedUser?.email).toBe(userData.email);
+
+      expect(queuedEmails).toHaveLength(1);
+      expect(queuedEmails[0]?.recipient).toBe(userData.email);
+      expect(queuedEmails[0]?.templateName).toBe('verifyAccount');
     });
 
     it('throws ResourceAlreadyExistsError when user with email already exists', async () => {

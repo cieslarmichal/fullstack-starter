@@ -32,6 +32,14 @@
     "accountDeletion": {
       "max": 1000,
       "timeWindow": 3600000
+    },
+    "passwordReset": {
+      "max": 1000,
+      "timeWindow": 600000
+    },
+    "uploadImage": {
+      "max": 1000,
+      "timeWindow": 60000
     }
   },
   "database": {
@@ -39,6 +47,13 @@
   },
   "cookie": {
     "secret": "12345678901a"
+  },
+  "resend": {
+    "apiKey": "dummy-resend-key"
+  },
+  "jobs": {
+    "enabled": false,
+    "emailQueueName": "send-email-test"
   },
   "token": {
     "access": {

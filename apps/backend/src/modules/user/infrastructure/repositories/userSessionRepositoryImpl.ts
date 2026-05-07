@@ -1,6 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm';
 
-import { UuidService } from '../../../../common/uuid/uuidService.ts';
+import { IdService } from '../../../../common/id/idService.ts';
 import type { DatabaseClient } from '../../../../infrastructure/database/databaseClient.ts';
 import { userSessions } from '../../../../infrastructure/database/schema.ts';
 import type { Transaction } from '../../../../infrastructure/database/transaction.ts';
@@ -20,7 +20,7 @@ export class UserSessionRepositoryImpl implements UserSessionRepository {
   }
 
   public async create(data: CreateUserSessionData): Promise<UserSession> {
-    const id = data.id ?? UuidService.generateUuid();
+    const id = data.id ?? IdService.generateUuid();
     const now = new Date();
 
     const result = await this.databaseClient.db
