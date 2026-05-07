@@ -69,16 +69,23 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     };
   };
 
+  // TODO: adjust domains
+  const appDomains = {
+    production: '.fullstackstarter.com',
+    staging: '.staging.fullstackstarter.com',
+  };
+
   const refreshTokenCookie = {
-    name: 'refresh-token',
+    name: appEnvironment === 'staging' ? 'refresh-token-staging' : 'refresh-token',
     config: {
       httpOnly: true,
       secure: true,
-      sameSite: appEnvironment === 'production' ? ('lax' as const) : ('none' as const),
+      sameSite: appEnvironment === 'production' || appEnvironment === 'staging' ? ('lax' as const) : ('none' as const),
       path: '/',
       maxAge: config.token.refresh.expiresIn,
-      // TODO: adjust domain as needed for production
-      ...(appEnvironment === 'production' ? { domain: '.fullstack-starter.com' } : {}),
+      ...(appEnvironment && appEnvironment in appDomains
+        ? { domain: appDomains[appEnvironment as keyof typeof appDomains] }
+        : {}),
     },
   };
 
@@ -241,7 +248,10 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
 
       await logoutUserAction.execute({ refreshToken });
 
-      reply.clearCookie(refreshTokenCookie.name, { path: refreshTokenCookie.config.path });
+      reply.clearCookie(refreshTokenCookie.name, {
+        path: refreshTokenCookie.config.path,
+        ...('domain' in refreshTokenCookie.config ? { domain: refreshTokenCookie.config.domain } : {}),
+      });
 
       return reply.status(204).send(null);
     },
@@ -351,10 +361,7 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
       },
     },
     handler: async (request, reply) => {
-      await verifyUserEmailAction.execute(
-        { emailVerificationToken: request.body.token },
-        { requestId: request.id },
-      );
+      await verifyUserEmailAction.execute({ emailVerificationToken: request.body.token }, { requestId: request.id });
 
       return reply.status(204).send(null);
     },
