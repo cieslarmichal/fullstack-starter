@@ -4,7 +4,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Generator } from '../../../../tests/generator.ts';
 import { truncateTables } from '../../../../tests/helpers/dbCleanup.ts';
 import { closeTestServer, createTestContext } from '../../../../tests/helpers/testServer.ts';
+import { CryptoService } from '../../../common/crypto/cryptoService.ts';
+import { IdService } from '../../../common/id/idService.ts';
 import type { DatabaseClient } from '../../../infrastructure/database/databaseClient.ts';
+import { OneTimeTokenRepositoryImpl } from '../infrastructure/repositories/oneTimeTokenRepositoryImpl.ts';
 import { UserRepositoryImpl } from '../infrastructure/repositories/userRepositoryImpl.ts';
 
 import type { LoginResponse, UserDto } from './userSchemas.ts';
@@ -13,12 +16,14 @@ describe('User Routes Integration Tests', () => {
   let server: FastifyInstance;
   let databaseClient: DatabaseClient;
   let userRepository: UserRepositoryImpl;
+  let oneTimeTokenRepository: OneTimeTokenRepositoryImpl;
 
   beforeAll(async () => {
     const testContext = await createTestContext();
     server = testContext.server;
     databaseClient = testContext.databaseClient;
     userRepository = new UserRepositoryImpl(databaseClient);
+    oneTimeTokenRepository = new OneTimeTokenRepositoryImpl(databaseClient);
   });
 
   afterAll(async () => {
@@ -28,6 +33,24 @@ describe('User Routes Integration Tests', () => {
   beforeEach(async () => {
     await truncateTables(databaseClient);
   });
+
+  async function registerVerifiedUser(userData: { email: string; password: string }): Promise<void> {
+    await server.inject({
+      method: 'POST',
+      url: '/users/register',
+      payload: userData,
+    });
+    const user = await userRepository.findByEmail(userData.email);
+    await userRepository.update(user!.id, { isEmailVerified: true });
+  }
+
+  async function createOtt(userId: string, purpose: 'email-verification' | 'reset-password'): Promise<string> {
+    const rawToken = IdService.generateNanoid();
+    const tokenHash = CryptoService.hashData(rawToken);
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await oneTimeTokenRepository.create({ userId, tokenHash, purpose, expiresAt });
+    return rawToken;
+  }
 
   describe('POST /users/register', () => {
     it('should register a new user successfully', async () => {
@@ -104,14 +127,8 @@ describe('User Routes Integration Tests', () => {
         password: Generator.password(),
       };
 
-      // Register user first
-      await server.inject({
-        method: 'POST',
-        url: '/users/register',
-        payload: userData,
-      });
+      await registerVerifiedUser(userData);
 
-      // Login
       const response = await server.inject({
         method: 'POST',
         url: '/users/login',
@@ -141,12 +158,7 @@ describe('User Routes Integration Tests', () => {
         password: Generator.password(),
       };
 
-      // Register user first
-      await server.inject({
-        method: 'POST',
-        url: '/users/register',
-        payload: userData,
-      });
+      await registerVerifiedUser(userData);
 
       // Login with wrong password
       const response = await server.inject({
@@ -182,12 +194,7 @@ describe('User Routes Integration Tests', () => {
         password: Generator.password(),
       };
 
-      // Register user
-      await server.inject({
-        method: 'POST',
-        url: '/users/register',
-        payload: userData,
-      });
+      await registerVerifiedUser(userData);
 
       // Login
       const loginResponse = await server.inject({
@@ -227,12 +234,7 @@ describe('User Routes Integration Tests', () => {
         password: Generator.password(),
       };
 
-      // Register user
-      await server.inject({
-        method: 'POST',
-        url: '/users/register',
-        payload: userData,
-      });
+      await registerVerifiedUser(userData);
 
       // Login
       const loginResponse = await server.inject({
@@ -286,12 +288,7 @@ describe('User Routes Integration Tests', () => {
         password: Generator.password(),
       };
 
-      // Register user
-      await server.inject({
-        method: 'POST',
-        url: '/users/register',
-        payload: userData,
-      });
+      await registerVerifiedUser(userData);
 
       // Login
       const loginResponse = await server.inject({
@@ -354,12 +351,7 @@ describe('User Routes Integration Tests', () => {
         password: Generator.password(),
       };
 
-      // Register user
-      await server.inject({
-        method: 'POST',
-        url: '/users/register',
-        payload: userData,
-      });
+      await registerVerifiedUser(userData);
 
       // Login
       const loginResponse = await server.inject({
@@ -382,8 +374,6 @@ describe('User Routes Integration Tests', () => {
         },
       });
 
-      console.log(response.body);
-
       expect(response.statusCode).toBe(204);
 
       // Verify user was deleted from database
@@ -398,6 +388,168 @@ describe('User Routes Integration Tests', () => {
       });
 
       expect(response.statusCode).toBe(401);
+    });
+  });
+
+  describe('POST /users/verify-email', () => {
+    it('should verify email with valid token', async () => {
+      const userData = {
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      // Register without verifying so isEmailVerified remains false
+      await server.inject({ method: 'POST', url: '/users/register', payload: userData });
+
+      const user = await userRepository.findByEmail(userData.email);
+      const rawToken = await createOtt(user!.id, 'email-verification');
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/verify-email',
+        payload: { token: rawToken },
+      });
+
+      expect(response.statusCode).toBe(204);
+
+      const updatedUser = await userRepository.findById(user!.id);
+      expect(updatedUser?.isEmailVerified).toBe(true);
+    });
+
+    it('should return 400 for invalid token', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/verify-email',
+        payload: { token: 'invalid-token' },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('POST /users/validate-one-time-token', () => {
+    it('should return valid: true for a valid token', async () => {
+      const userData = {
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      await server.inject({ method: 'POST', url: '/users/register', payload: userData });
+
+      const user = await userRepository.findByEmail(userData.email);
+      const rawToken = await createOtt(user!.id, 'email-verification');
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/validate-one-time-token',
+        payload: { token: rawToken, purpose: 'email-verification' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json<{ valid: boolean }>().valid).toBe(true);
+    });
+
+    it('should return valid: false for an invalid token', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/validate-one-time-token',
+        payload: { token: 'invalid-token', purpose: 'email-verification' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json<{ valid: boolean }>().valid).toBe(false);
+    });
+  });
+
+  describe('POST /users/change-password-by-token', () => {
+    it('should change password with valid reset token', async () => {
+      const userData = {
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      await server.inject({ method: 'POST', url: '/users/register', payload: userData });
+
+      const user = await userRepository.findByEmail(userData.email);
+      const rawToken = await createOtt(user!.id, 'reset-password');
+
+      const newPassword = Generator.password();
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/change-password-by-token',
+        payload: { token: rawToken, newPassword },
+      });
+
+      expect(response.statusCode).toBe(204);
+    });
+
+    it('should return 400 for invalid token', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/change-password-by-token',
+        payload: { token: 'invalid-token', newPassword: Generator.password() },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('POST /users/send-reset-password-email', () => {
+    it('should return 204 for existing user', async () => {
+      const userData = {
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      await server.inject({ method: 'POST', url: '/users/register', payload: userData });
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/send-reset-password-email',
+        payload: { email: userData.email },
+      });
+
+      expect(response.statusCode).toBe(204);
+    });
+
+    it('should return 204 for non-existent user', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/send-reset-password-email',
+        payload: { email: Generator.email() },
+      });
+
+      expect(response.statusCode).toBe(204);
+    });
+  });
+
+  describe('POST /users/resend-verification', () => {
+    it('should return 204 for existing unverified user', async () => {
+      const userData = {
+        email: Generator.email(),
+        password: Generator.password(),
+      };
+
+      await server.inject({ method: 'POST', url: '/users/register', payload: userData });
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/resend-verification',
+        payload: { email: userData.email },
+      });
+
+      expect(response.statusCode).toBe(204);
+    });
+
+    it('should return 204 for non-existent user', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/users/resend-verification',
+        payload: { email: Generator.email() },
+      });
+
+      expect(response.statusCode).toBe(204);
     });
   });
 });
