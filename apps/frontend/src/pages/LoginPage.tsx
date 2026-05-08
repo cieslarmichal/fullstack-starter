@@ -38,11 +38,11 @@ export default function LoginPage() {
     if (activeTab === 'register') {
       if (isRegistrationSuccess) {
         return {
-          title: 'Account Created Successfully!',
+          title: 'Check your email',
           content: (
             <div className="px-6 text-center space-y-6">
               <div className="space-y-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto border-2 border-black">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200">
                   <svg
                     className="w-8 h-8 text-black"
                     fill="none"
@@ -53,13 +53,13 @@ export default function LoginPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M5 13l4 4L19 7"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                     />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-black">Welcome aboard!</h3>
+                <h3 className="text-xl font-semibold text-black">Confirm your email</h3>
                 <p className="text-gray-600">
-                  Your account has been created successfully. You can now sign in with your credentials.
+                  We sent a confirmation link to your inbox. Click it to activate your account, then sign in.
                 </p>
               </div>
               <Button

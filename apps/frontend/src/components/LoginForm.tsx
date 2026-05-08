@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/Form';
 import { Input } from '@/components/ui/Input';
 import { loginUser } from '../api/queries/login';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import { ApiError } from '../api/ApiError';
@@ -108,7 +108,15 @@ export default function LoginForm() {
             name="password"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel htmlFor="password">Password</FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel htmlFor="password">Password</FormLabel>
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-gray-600 hover:text-black hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <FormControl>
                     <Input

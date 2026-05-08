@@ -9,6 +9,9 @@ import { TooltipProvider } from './components/ui/Tooltip.tsx';
 import PrivateRoute from './auth/privateRoute.tsx';
 import LogoutPage from './pages/LogoutPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx';
+import NewPasswordPage from './pages/NewPasswordPage.tsx';
+import VerifyEmailPage from './pages/VerifyEmailPage.tsx';
 
 const router = createBrowserRouter([
   {
@@ -22,6 +25,18 @@ const router = createBrowserRouter([
       {
         path: '/login',
         element: <LoginPage />,
+      },
+      {
+        path: '/forgot-password',
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: '/new-password',
+        element: <NewPasswordPage />,
+      },
+      {
+        path: '/verify-email',
+        element: <VerifyEmailPage />,
       },
       {
         path: '/logout',
