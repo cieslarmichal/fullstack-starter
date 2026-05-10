@@ -34,7 +34,14 @@ const configSchema = Type.Object({
       keepAliveInitialDelayMillis: Type.Number({ minimum: 0, maximum: 30000 }),
     }),
   }),
-  cookie: Type.Object({ secret: Type.String({ minLength: 1 }) }),
+  cookie: Type.Object({
+    secret: Type.String({ minLength: 1 }),
+    refreshToken: Type.Object({
+      name: Type.String({ minLength: 1 }),
+      sameSite: Type.Union([Type.Literal('lax'), Type.Literal('none'), Type.Literal('strict')]),
+      domain: Type.Optional(Type.String({ minLength: 1 })),
+    }),
+  }),
   frontendUrl: Type.String({ minLength: 1 }),
   hashSaltRounds: Type.Number({ minimum: 10, maximum: 15 }),
   logLevel: Type.Union(
@@ -112,10 +119,7 @@ const configSchema = Type.Object({
     maxFileSizeBytes: Type.Number({ minimum: 1024 * 1024, maximum: 5 * 1024 * 1024 }),
     allowedContentTypes: Type.Array(Type.String({ minLength: 1 })),
   }),
-  jobs: Type.Object({
-    enabled: Type.Boolean(),
-    emailQueueName: Type.String({ minLength: 1 }),
-  }),
+  emailQueueName: Type.String({ minLength: 1 }),
 });
 
 export type Config = Static<typeof configSchema>;

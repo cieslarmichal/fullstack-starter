@@ -40,8 +40,6 @@ import {
   type UserDto,
 } from './userSchemas.ts';
 
-const appEnvironment = process.env['NODE_ENV'];
-
 export const userRoutes: FastifyPluginAsyncTypebox<{
   databaseClient: DatabaseClient;
   config: Config;
@@ -69,23 +67,15 @@ export const userRoutes: FastifyPluginAsyncTypebox<{
     };
   };
 
-  // TODO: adjust domains
-  const appDomains = {
-    production: '.fullstackstarter.com',
-    staging: '.staging.fullstackstarter.com',
-  };
-
   const refreshTokenCookie = {
-    name: appEnvironment === 'staging' ? 'refresh-token-staging' : 'refresh-token',
+    name: config.cookie.refreshToken.name,
     config: {
       httpOnly: true,
       secure: true,
-      sameSite: appEnvironment === 'production' || appEnvironment === 'staging' ? ('lax' as const) : ('none' as const),
+      sameSite: config.cookie.refreshToken.sameSite,
       path: '/',
       maxAge: config.token.refresh.expiresIn,
-      ...(appEnvironment && appEnvironment in appDomains
-        ? { domain: appDomains[appEnvironment as keyof typeof appDomains] }
-        : {}),
+      ...(config.cookie.refreshToken.domain ? { domain: config.cookie.refreshToken.domain } : {}),
     },
   };
 

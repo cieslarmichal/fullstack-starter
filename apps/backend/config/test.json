@@ -51,10 +51,7 @@
   "resend": {
     "apiKey": "dummy-resend-key"
   },
-  "jobs": {
-    "enabled": false,
-    "emailQueueName": "send-email-test"
-  },
+  "emailQueueName": "send-email-test",
   "token": {
     "access": {
       "secret": "12321313423565365654546654121890008a"

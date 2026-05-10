@@ -22,9 +22,7 @@ export class Application {
 
     await this.databaseClient.testConnection();
 
-    if (config.jobs.enabled) {
-      await this.emailQueueService.start();
-    }
+    await this.emailQueueService.start();
 
     await this.server.start();
   }

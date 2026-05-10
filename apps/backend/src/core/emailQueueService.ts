@@ -22,7 +22,7 @@ export class EmailQueueService {
   public constructor(emailService: EmailService, loggerService: LoggerService, config: Config) {
     this.emailService = emailService;
     this.loggerService = loggerService;
-    this.emailQueueName = config.jobs.emailQueueName;
+    this.emailQueueName = config.emailQueueName;
     this.config = config;
     this.boss = this.createBoss();
   }

@@ -15,21 +15,17 @@
     "region": "eu-central-1",
     "bucketName": "fullstack-starter-bucket"
   },
+  "cookie": {
+    "refreshToken": {
+      "name": "refresh-token",
+      "sameSite": "none"
+    }
+  },
   "frontendUrl": "http://localhost:5173",
   "hashSaltRounds": 12,
   "logLevel": "debug",
   "resend": {
-    "fromEmail": "Fullstack Starter <noreply@example.com>",
-    "emails": {
-      "verifyAccount": {
-        "templateFile": "verifyAccount.html",
-        "subject": "Confirm your email address"
-      },
-      "resetPassword": {
-        "templateFile": "resetPassword.html",
-        "subject": "Reset your password"
-      }
-    }
+    "fromEmail": "Fullstack Starter <noreply@example.com>"
   },
   "server": {
     "host": "0.0.0.0",
@@ -93,8 +89,5 @@
     "maxFileSizeBytes": 3145728,
     "allowedContentTypes": ["image/jpeg", "image/jpg", "image/png", "image/webp"]
   },
-  "jobs": {
-    "enabled": true,
-    "emailQueueName": "send-email"
-  }
+  "emailQueueName": "send-email"
 }

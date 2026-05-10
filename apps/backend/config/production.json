@@ -37,5 +37,12 @@
       "timeWindow": 60000
     }
   },
-  "logLevel": "info"
+  "logLevel": "info",
+  "cookie": {
+    "refreshToken": {
+      "name": "refresh-token",
+      "sameSite": "lax",
+      "domain": ".fullstackstarter.com"
+    }
+  }
 }
