@@ -1,46 +1,46 @@
-import { Server, Code, Database, Lock, Zap, CheckCircle2, Boxes, Rocket } from 'lucide-react';
+import { Server, Code, Database, Lock, Mail, Image, FlaskConical, Boxes } from 'lucide-react';
 
 export default function HomePage() {
   const features = [
     {
       icon: Server,
       title: 'Backend with Fastify',
-      description: 'High-performance Node.js server with TypeScript, TypeBox validation, and structured logging.',
+      description: 'High-performance Node.js server with TypeScript, TypeBox validation, Pino logging, and per-route rate limiting.',
     },
     {
       icon: Code,
       title: 'Frontend with React',
-      description: 'Modern React 19 with TypeScript, Tailwind CSS, React Router, and beautiful Radix UI components.',
+      description: 'React 19 with TypeScript, Tailwind CSS v4, React Router v7, Radix UI, React Hook Form, and Sonner toasts.',
     },
     {
       icon: Database,
       title: 'PostgreSQL & Drizzle ORM',
-      description: 'Type-safe database queries with Drizzle ORM, migrations, and connection pooling built-in.',
+      description: 'Type-safe queries with Drizzle ORM, automatic migrations, UUID v7 primary keys, and serializable transactions.',
     },
     {
       icon: Lock,
-      title: 'Authentication Ready',
-      description: 'Complete auth system with JWT tokens, refresh tokens, password hashing, and secure cookies.',
+      title: 'Complete Auth System',
+      description: 'JWT access tokens + HTTP-only refresh tokens with rotation. Sessions in DB, email verification, and password reset via one-time tokens.',
     },
     {
-      icon: Zap,
-      title: 'Testing Setup',
-      description: 'Unit tests with Vitest, e2e tests with Playwright, and MSW for API mocking.',
+      icon: Mail,
+      title: 'Email System',
+      description: 'Transactional email via Resend with pg-boss job queue for reliable background delivery.',
+    },
+    {
+      icon: Image,
+      title: 'S3 & Image Uploads',
+      description: 'AWS S3 file storage with Sharp-based image optimization — WebP conversion and resizing. LocalStack for local development.',
+    },
+    {
+      icon: FlaskConical,
+      title: 'Integration Testing',
+      description: 'Vitest integration tests running against a real PostgreSQL database. Seeder tool for generating test data.',
     },
     {
       icon: Boxes,
-      title: 'Monorepo Architecture',
-      description: 'Organized with npm workspaces and Turborepo for efficient builds and development.',
-    },
-    {
-      icon: CheckCircle2,
       title: 'Production Ready',
-      description: 'Docker setup, error handling, logging, security headers, and deployment configurations included.',
-    },
-    {
-      icon: Rocket,
-      title: 'Developer Experience',
-      description: 'Hot reload, TypeScript strict mode, ESLint, Prettier, and comprehensive documentation.',
+      description: 'Turborepo monorepo, Docker multi-stage builds, GitHub Actions CI/CD, and Fly.io deployment config included.',
     },
   ];
 
