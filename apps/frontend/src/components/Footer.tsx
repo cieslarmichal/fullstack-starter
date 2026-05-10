@@ -64,9 +64,9 @@ export default function Footer() {
 
       <div className="border-t border-primary/80 mt-10 pt-6 text-center px-4">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 opacity-80 text-sm">
-          <span>© 2025 Fullstack Starter.</span>
+          <span>© 2026 Fullstack Starter</span>
           <span>
-            Crafted with ❤️ by{' '}
+            Crafted by{' '}
             <a
               href="https://github.com/cieslarmichal"
               target="_blank"

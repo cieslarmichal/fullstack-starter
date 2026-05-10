@@ -36,7 +36,7 @@ async function seedAdmin(): Promise<void> {
   }
 
   try {
-    const [existing] = await db.select().from(users).where(eq(users.email, adminEmail!));
+    const [existing] = await db.select().from(users).where(eq(users.email, adminEmail));
 
     if (existing) {
       console.log(`Admin user with email ${adminEmail} already exists. Skipping.`);
@@ -47,7 +47,7 @@ async function seedAdmin(): Promise<void> {
 
     await db.insert(users).values({
       id: uuidv7(),
-      email: adminEmail!,
+      email: adminEmail,
       password: hashedPassword,
       role: 'admin',
       isEmailVerified: true,

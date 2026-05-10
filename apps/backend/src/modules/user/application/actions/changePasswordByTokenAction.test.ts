@@ -66,7 +66,9 @@ describe('ChangePasswordByTokenAction', () => {
       await changePasswordByTokenAction.execute({ token: rawToken, newPassword }, context);
 
       const updatedUser = await userRepository.findById(user.id);
-      const isNewPasswordValid = await passwordService.comparePasswords(newPassword, updatedUser!.password);
+      expect(updatedUser).toBeDefined();
+      if (!updatedUser) return;
+      const isNewPasswordValid = await passwordService.comparePasswords(newPassword, updatedUser.password);
       expect(isNewPasswordValid).toBe(true);
     });
 

@@ -54,11 +54,12 @@ describe('ChangePasswordAction', () => {
 
     const updatedUser = await userRepository.findById(user.id);
     expect(updatedUser).toBeDefined();
+    if (!updatedUser) return;
 
-    const isNewPasswordValid = await passwordService.comparePasswords(newPassword, updatedUser!.password);
+    const isNewPasswordValid = await passwordService.comparePasswords(newPassword, updatedUser.password);
     expect(isNewPasswordValid).toBe(true);
 
-    const isOldPasswordValid = await passwordService.comparePasswords(rawPassword, updatedUser!.password);
+    const isOldPasswordValid = await passwordService.comparePasswords(rawPassword, updatedUser.password);
     expect(isOldPasswordValid).toBe(false);
   });
 

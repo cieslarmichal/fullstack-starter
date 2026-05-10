@@ -74,7 +74,7 @@ export class UserSessionRepositoryImpl implements UserSessionRepository {
     await db
       .update(userSessions)
       .set({
-        prevRefreshHash: sql`${userSessions.currentRefreshHash}` as unknown as string,
+        prevRefreshHash: sql`${userSessions.currentRefreshHash}`,
         prevUsableUntil,
         currentRefreshHash: data.newRefreshHash,
         lastRotatedAt: now,

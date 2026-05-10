@@ -42,7 +42,7 @@
     "refreshToken": {
       "name": "refresh-token",
       "sameSite": "lax",
-      "domain": ".fullstackstarter.com"
+      "domain": ".fullstack-starter.com"
     }
   }
 }
