@@ -2,7 +2,6 @@ import { type Logger as PinoLogger } from 'pino';
 
 interface LogPayload {
   readonly message: string;
-  readonly event?: string;
   readonly [key: string]: unknown;
 }
 
@@ -14,26 +13,26 @@ export class LoggerService {
   }
 
   public error(payload: LogPayload): void {
-    const { message, event, ...context } = payload;
+    const { message, ...context } = payload;
 
-    this.pinoLogger.error({ ...context, event }, message);
+    this.pinoLogger.error(context, message);
   }
 
   public warn(payload: LogPayload): void {
-    const { message, event, ...context } = payload;
+    const { message, ...context } = payload;
 
-    this.pinoLogger.warn({ ...context, event }, message);
+    this.pinoLogger.warn(context, message);
   }
 
   public info(payload: LogPayload): void {
-    const { message, event, ...context } = payload;
+    const { message, ...context } = payload;
 
-    this.pinoLogger.info({ ...context, event }, message);
+    this.pinoLogger.info(context, message);
   }
 
   public debug(payload: LogPayload): void {
-    const { message, event, ...context } = payload;
+    const { message, ...context } = payload;
 
-    this.pinoLogger.debug({ ...context, event }, message);
+    this.pinoLogger.debug(context, message);
   }
 }

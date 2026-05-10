@@ -71,6 +71,7 @@ describe('User Routes Integration Tests', () => {
 
       expect(body).toMatchObject({
         email: userData.email,
+        role: 'user',
       });
       expect(body.id).toBeTypeOf('string');
       expect(body.createdAt).toBeTypeOf('string');
@@ -317,6 +318,7 @@ describe('User Routes Integration Tests', () => {
 
       expect(body).toMatchObject({
         email: userData.email,
+        role: 'user',
       });
       expect(body.id).toBeTypeOf('string');
       expect(body.createdAt).toBeTypeOf('string');

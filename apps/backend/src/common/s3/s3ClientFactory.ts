@@ -1,6 +1,6 @@
 import { S3, type S3ClientConfig, type S3Client } from '@aws-sdk/client-s3';
 
-import { type AwsRegion } from './awsRegion.js';
+import { type AwsRegion } from './awsRegion.ts';
 
 export interface S3Config {
   readonly accessKeyId: string;

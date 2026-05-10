@@ -44,7 +44,7 @@ body {
 
   /* Destructive: Keep red for errors */
   --destructive: oklch(0.55 0.22 25); /* Red */
-  --destructive-foreground: oklch(0.55 0.22 25); /* Red */
+  --destructive-foreground: oklch(1 0 0); /* White */
 
   /* Borders and inputs */
   --border: oklch(0.9 0 0); /* Light gray border */

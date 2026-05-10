@@ -1,20 +1,18 @@
 import { useContext } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext.tsx';
 
-export default function PrivateRoute({ children }: { children: React.ReactNode }) {
+export default function PublicRoute({ children }: { children: React.ReactNode }) {
   const { userData, userDataInitialized } = useContext(AuthContext);
-  const location = useLocation();
 
   if (!userDataInitialized) {
     return null;
   }
 
-  if (!userData) {
+  if (userData) {
     return (
       <Navigate
-        to="/login"
-        state={{ from: location }}
+        to={userData.role === 'admin' ? '/admin' : '/'}
         replace
       />
     );

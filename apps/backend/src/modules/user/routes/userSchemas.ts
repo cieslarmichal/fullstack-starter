@@ -1,11 +1,36 @@
 import { Type, type Static } from '@fastify/type-provider-typebox';
 
+export const roleSchema = Type.Union([Type.Literal('admin'), Type.Literal('user')]);
+
 export const userSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
   email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
+  role: roleSchema,
   isEmailVerified: Type.Boolean(),
   isDeleted: Type.Boolean(),
   createdAt: Type.String({ format: 'date-time' }),
+});
+
+export const adminUserSchema = Type.Object({
+  id: Type.String({ format: 'uuid' }),
+  email: Type.String({ minLength: 1, maxLength: 255, format: 'email' }),
+  role: roleSchema,
+  isEmailVerified: Type.Boolean(),
+  isDeleted: Type.Boolean(),
+  createdAt: Type.String({ format: 'date-time' }),
+});
+
+export const adminUsersQuerySchema = Type.Object({
+  email: Type.Optional(Type.String({ minLength: 1, maxLength: 255 })),
+  page: Type.Optional(Type.Number({ minimum: 1 })),
+  pageSize: Type.Optional(Type.Number({ minimum: 1, maximum: 100 })),
+});
+
+export const adminUsersResponseSchema = Type.Object({
+  data: Type.Array(adminUserSchema),
+  metadata: Type.Object({
+    total: Type.Number(),
+  }),
 });
 
 export const registerRequestSchema = Type.Object({
@@ -53,6 +78,7 @@ export const validateOneTimeTokenResponseSchema = Type.Object({
 });
 
 export type UserDto = Static<typeof userSchema>;
+export type AdminUserDto = Static<typeof adminUserSchema>;
 export type RegisterRequest = Static<typeof registerRequestSchema>;
 export type LoginRequest = Static<typeof loginRequestSchema>;
 export type LoginResponse = Static<typeof loginResponseSchema>;

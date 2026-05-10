@@ -1,5 +1,5 @@
 {
-  "id": "70a8ae74-4931-4447-8ccb-5501ef82895f",
+  "id": "fee36ac1-88aa-4584-a2a8-bfaf12d4c14f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -276,6 +276,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
         },
         "is_email_verified": {
           "name": "is_email_verified",

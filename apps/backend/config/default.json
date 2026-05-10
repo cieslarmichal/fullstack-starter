@@ -25,7 +25,17 @@
   "hashSaltRounds": 12,
   "logLevel": "debug",
   "resend": {
-    "fromEmail": "Fullstack Starter <noreply@example.com>"
+    "fromEmail": "Fullstack Starter <noreply@example.com>",
+    "emails": {
+      "verifyAccount": {
+        "templateFile": "verifyAccount.html",
+        "subject": "Confirm your email address"
+      },
+      "resetPassword": {
+        "templateFile": "resetPassword.html",
+        "subject": "Reset your password"
+      }
+    }
   },
   "server": {
     "host": "0.0.0.0",

@@ -68,7 +68,7 @@ export class RefreshTokenAction {
     const { sessionId } = tokenPayload;
 
     // Try rotate if presented hash equals current
-    const newPayload = { userId: user.id, email: user.email };
+    const newPayload = { userId: user.id, email: user.email, role: user.role };
     const newAccessToken = this.tokenService.generateAccessToken(newPayload);
 
     const newRefreshPayload = { ...newPayload, sessionId };

@@ -26,6 +26,7 @@ CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"email" varchar(255) NOT NULL,
 	"password" text NOT NULL,
+	"role" varchar(10) DEFAULT 'user' NOT NULL,
 	"is_email_verified" boolean DEFAULT false NOT NULL,
 	"is_deleted" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,

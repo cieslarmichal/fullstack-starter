@@ -14,6 +14,7 @@ export class LoggerServiceFactory {
       base: null,
       serializers: {
         err: stdSerializers.err,
+        error: stdSerializers.err,
       },
     });
 

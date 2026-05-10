@@ -6,6 +6,7 @@ export const users = pgTable(
     id: uuid('id').primaryKey(),
     email: varchar('email', { length: 255 }).notNull().unique(),
     password: text('password').notNull(),
+    role: varchar('role', { length: 10 }).notNull().default('user'),
     isEmailVerified: boolean('is_email_verified').notNull().default(false),
     isDeleted: boolean('is_deleted').notNull().default(false),
     createdAt: timestamp('created_at').notNull().defaultNow(),

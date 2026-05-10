@@ -67,6 +67,7 @@ describe('CreateUserAction', () => {
       expect(result).toBeDefined();
       expect(result.id).toBeDefined();
       expect(result.email).toBe(userData.email);
+      expect(result.role).toBe('user');
       expect(result.isEmailVerified).toBe(false);
       expect(result.isDeleted).toBe(false);
       expect(result.createdAt).toBeDefined();
