@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { getAdminUsers, type AdminUsersResponse } from '../api/queries/getAdminUsers';
 import { Badge } from '../components/ui/Badge';
@@ -14,30 +14,38 @@ export default function AdminUsersPage() {
   useSEO({ title: 'Users - Admin', noindex: true });
 
   const [response, setResponse] = useState<AdminUsersResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadedParams, setLoadedParams] = useState<{ page: number; email: string } | null>(null);
   const [page, setPage] = useState(1);
   const [emailFilter, setEmailFilter] = useState('');
   const debouncedEmail = useDebounce(emailFilter, 400);
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await getAdminUsers({ page, pageSize: PAGE_SIZE, email: debouncedEmail || undefined });
-      setResponse(data);
-    } catch {
-      toast.error('Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, debouncedEmail]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  useEffect(() => {
+  const [prevDebouncedEmail, setPrevDebouncedEmail] = useState(debouncedEmail);
+  if (debouncedEmail !== prevDebouncedEmail) {
+    setPrevDebouncedEmail(debouncedEmail);
     setPage(1);
-  }, [debouncedEmail]);
+  }
+
+  const loading = loadedParams === null || loadedParams.page !== page || loadedParams.email !== debouncedEmail;
+
+  useEffect(() => {
+    let ignore = false;
+
+    getAdminUsers({ page, pageSize: PAGE_SIZE, email: debouncedEmail || undefined })
+      .then((data) => {
+        if (ignore) return;
+        setResponse(data);
+        setLoadedParams({ page, email: debouncedEmail });
+      })
+      .catch(() => {
+        if (ignore) return;
+        toast.error('Failed to load users');
+        setLoadedParams({ page, email: debouncedEmail });
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [page, debouncedEmail]);
 
   const totalPages = response ? Math.ceil(response.metadata.total / PAGE_SIZE) : 0;
 
