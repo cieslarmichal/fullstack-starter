@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/Input';
 import EmailConfirmationStep from '../components/EmailConfirmationStep';
 import { verifyEmail } from '../api/queries/verifyEmail';
 import { resendVerification } from '../api/queries/resendVerification';
+import { site } from '../config';
+import { useSEO } from '../hooks/useSEO';
 
 const resendSchema = z.object({
   email: z.string().email().max(254),
@@ -20,6 +22,8 @@ const resendSchema = z.object({
 type ResendFormValues = z.infer<typeof resendSchema>;
 
 export default function VerifyEmailPage() {
+  useSEO({ title: `Verify Email - ${site.name}`, noindex: true });
+
   const queryParams = new URLSearchParams(window.location.search);
   const token = queryParams.get('token');
   const [emailVerified, setEmailVerified] = useState(false);

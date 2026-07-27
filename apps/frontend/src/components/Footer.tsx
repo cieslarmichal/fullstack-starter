@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail } from 'lucide-react';
+
+import { site } from '../config';
 
 const productLinks = [
   { name: 'Home', href: '/' },
@@ -23,13 +25,13 @@ export default function Footer() {
               className="flex items-center gap-3 group w-fit"
             >
               <div className="h-8 w-8 bg-primary-foreground rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
-                <span className="text-primary font-bold text-lg">FS</span>
+                <span className="text-primary font-bold text-lg">{site.initials}</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight">Fullstack Starter</h2>
+              <h2 className="text-xl font-bold tracking-tight">{site.name}</h2>
             </Link>
             <div className="flex items-center gap-2 mt-5">
               <a
-                href="https://github.com/cieslarmichal/fullstack-starter"
+                href={site.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
@@ -72,31 +74,11 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="mailto:contact@fullstack-starter.com"
+                  href={`mailto:${site.contactEmail}`}
                   className="flex items-center gap-3 opacity-70 hover:opacity-100 transition-opacity"
                 >
                   <Mail className="w-4 h-4 shrink-0" />
-                  <span className="text-sm">contact@fullstack-starter.com</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="tel:+48123456789"
-                  className="flex items-center gap-3 opacity-70 hover:opacity-100 transition-opacity"
-                >
-                  <Phone className="w-4 h-4 shrink-0" />
-                  <span className="text-sm">+48 123 456 789</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://maps.google.com/?q=Cracow, Poland"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 opacity-70 hover:opacity-100 transition-opacity"
-                >
-                  <MapPin className="w-4 h-4 shrink-0" />
-                  <span className="text-sm">Cracow, Poland</span>
+                  <span className="text-sm">{site.contactEmail}</span>
                 </a>
               </li>
             </ul>
@@ -106,16 +88,18 @@ export default function Footer() {
 
       <div className="border-t border-primary-foreground/15">
         <div className="max-w-350 mx-auto px-4 lg:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs opacity-60">© {currentYear} Fullstack Starter. All rights reserved.</p>
+          <p className="text-xs opacity-60">
+            © {currentYear} {site.name}. All rights reserved.
+          </p>
           <p className="text-xs opacity-60">
             Crafted by{' '}
             <a
-              href="https://github.com/cieslarmichal"
+              href={site.authorUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="font-bold hover:opacity-100 underline underline-offset-2 transition-opacity"
             >
-              Michał Cieślar
+              {site.author}
             </a>
           </p>
         </div>

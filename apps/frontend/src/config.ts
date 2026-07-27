@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+/**
+ * Single place to rebrand the app. Everything user-facing — header, footer,
+ * page titles, meta tags — reads from here.
+ */
+export const site = {
+  name: 'Fullstack Starter',
+  initials: 'FS',
+  description: 'Fullstack starter with backend and frontend ready to go.',
+  url: 'https://fullstack-starter.com',
+  contactEmail: 'contact@fullstack-starter.com',
+  githubUrl: 'https://github.com/cieslarmichal/fullstack-starter',
+  author: 'Michał Cieślar',
+  authorUrl: 'https://github.com/cieslarmichal',
+} as const;
+
 const appConfig = {
   backendUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000',
 };

@@ -7,11 +7,12 @@ import { Input } from '../components/ui/Input';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useSEO } from '../hooks/useSEO';
 import { useDebounce } from '../hooks/useDebounce';
+import { site } from '../config';
 
 const PAGE_SIZE = 20;
 
 export default function AdminUsersPage() {
-  useSEO({ title: 'Users - Admin', noindex: true });
+  useSEO({ title: `Users - Admin - ${site.name}`, noindex: true });
 
   const [response, setResponse] = useState<AdminUsersResponse | null>(null);
   const [loadedParams, setLoadedParams] = useState<{ page: number; email: string } | null>(null);

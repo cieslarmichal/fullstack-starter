@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Users } from 'lucide-react';
+import { site } from '../config';
+import { useSEO } from '../hooks/useSEO';
 
 interface Tile {
   title: string;
@@ -20,6 +22,8 @@ const tiles: Tile[] = [
 ];
 
 export default function AdminDashboardPage() {
+  useSEO({ title: `Admin - ${site.name}`, noindex: true });
+
   const navigate = useNavigate();
 
   return (

@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 25.5.0
+          node-version: 26.5.0
           cache: "npm"
 
       - name: Cache dependencies
@@ -79,7 +79,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 25.5.0
+          node-version: 26.5.0
           cache: "npm"
 
       - name: Restore build artifacts

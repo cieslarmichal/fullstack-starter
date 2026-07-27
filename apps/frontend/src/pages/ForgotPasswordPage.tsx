@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/Input';
 import EmailConfirmationStep from '../components/EmailConfirmationStep';
 import { sendResetPasswordEmail } from '../api/queries/sendResetPasswordEmail';
 import { ApiError } from '../api/ApiError';
+import { site } from '../config';
+import { useSEO } from '../hooks/useSEO';
 
 const formSchema = z.object({
   email: z.string().email().max(254),
@@ -19,6 +21,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function ForgotPasswordPage() {
+  useSEO({ title: `Forgot Password - ${site.name}`, noindex: true });
+
   const navigate = useNavigate();
 
   const [resetPasswordSent, setResetPasswordSent] = useState(false);

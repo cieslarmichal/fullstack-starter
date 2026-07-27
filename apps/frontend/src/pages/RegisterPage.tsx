@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import RegisterForm from '../components/RegisterForm';
+import { site } from '../config';
+import { useSEO } from '../hooks/useSEO';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [isRegistrationSuccess, setIsRegistrationSuccess] = useState(false);
+
+  useSEO({ title: `Sign Up - ${site.name}`, description: `Create your ${site.name} account.` });
 
   if (isRegistrationSuccess) {
     return (

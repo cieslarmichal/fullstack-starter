@@ -53,10 +53,10 @@ This is a **Turborepo monorepo** with npm workspaces:
 Follows **Clean Architecture** with feature modules:
 
 ```
-core/           — App lifecycle, HTTP server, config, email queue, cron jobs
-common/         — Cross-cutting services: auth middleware, errors, logging, S3, MFA, email, cache
+core/           — App lifecycle, HTTP server, config, email queue
+common/         — Cross-cutting services: auth, crypto, email, errors, id, image optimization, logger, S3
 infrastructure/ — Drizzle DB client, schema, transaction management
-modules/        — Feature modules (training, user, subscription, image, invoice, sitemap)
+modules/        — Feature modules
 ```
 
 Each feature module is structured as:
@@ -81,10 +81,11 @@ Routes are registered as Fastify plugins. Transaction boundaries are defined in 
 ```
 pages/      — Page components (lazy-loaded via React.lazy)
 components/ — Reusable components (ui/ contains Radix UI wrappers)
-context/    — AuthContext (global auth state), AccountDisabledHandler
-auth/       — Route guards: PrivateRoute, PublicRoute, AdminRoute
+context/    — AuthContext + AuthContextProvider (global auth state)
+auth/       — Route guards: privateRoute, publicRoute, adminRoute
 api/        — REST API query functions and types
-hooks/      — Custom hooks (useDebounce, useSEO, useGeolocationConsent)
+hooks/      — Custom hooks (useDebounce, useSEO)
+config.ts   — Site metadata (name, URL, contact) + backend URL. Rebrand here first.
 ```
 
 Routing is in `App.tsx` using React Router v7 with loaders. Forms use React Hook Form + Zod. Global auth state lives in `AuthContext`.

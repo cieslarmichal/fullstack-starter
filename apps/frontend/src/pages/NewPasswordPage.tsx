@@ -14,6 +14,8 @@ import ErrorStep from '../components/ErrorStep';
 import { changePasswordByToken } from '../api/queries/changePasswordByToken';
 import { validateOneTimeToken } from '../api/queries/validateOneTimeToken';
 import { ApiError } from '../api/ApiError';
+import { site } from '../config';
+import { useSEO } from '../hooks/useSEO';
 
 const formSchema = z
   .object({
@@ -35,6 +37,8 @@ const formSchema = z
 type FormValues = z.infer<typeof formSchema>;
 
 export default function NewPasswordPage() {
+  useSEO({ title: `Set New Password - ${site.name}`, noindex: true });
+
   const queryParams = new URLSearchParams(window.location.search);
   const token = queryParams.get('token');
   const [showPassword, setShowPassword] = useState(false);

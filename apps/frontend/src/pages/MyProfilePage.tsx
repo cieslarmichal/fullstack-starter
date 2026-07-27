@@ -24,6 +24,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/Dialog';
+import { site } from '../config';
+import { useSEO } from '../hooks/useSEO';
 
 const passwordSchema = z
   .object({
@@ -50,6 +52,8 @@ const passwordSchema = z
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export default function MyProfilePage() {
+  useSEO({ title: `My Profile - ${site.name}`, noindex: true });
+
   const { userData, clearUserData } = useContext(AuthContext);
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);

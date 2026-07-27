@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
+import { site } from '../config';
+import { useSEO } from '../hooks/useSEO';
 
 export default function LoginPage() {
+  useSEO({ title: `Sign In - ${site.name}`, description: `Sign in to your ${site.name} account.` });
+
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center pt-32">
       <div className="w-full max-w-md space-y-6">

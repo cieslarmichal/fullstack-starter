@@ -1,3 +1,5 @@
+import { site } from '../config';
+
 export interface SEOConfig {
   title?: string;
   description?: string;
@@ -11,8 +13,8 @@ export interface SEOConfig {
 }
 
 const DEFAULT_SEO: Required<Pick<SEOConfig, 'title' | 'description' | 'ogType'>> = {
-  title: 'App',
-  description: 'Welcome to the app.',
+  title: site.name,
+  description: site.description,
   ogType: 'website',
 };
 

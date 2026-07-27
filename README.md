@@ -49,8 +49,8 @@ Turborepo with npm workspaces. Packages: `apps/backend`, `apps/frontend`, `tools
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v22+)
-- [npm](https://www.npmjs.com/) (comes with Node.js)
+- [Node.js](https://nodejs.org/) (v26+)
+- [npm](https://www.npmjs.com/) (v12+, comes with Node.js)
 - [Docker](https://www.docker.com/get-started) + [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Installation
@@ -79,6 +79,7 @@ Turborepo with npm workspaces. Packages: `apps/backend`, `apps/frontend`, `tools
 
    ```bash
    cd apps/backend
+   export RESEND_API_KEY=<your-resend-key>
    npm run dev
    ```
 
@@ -88,6 +89,28 @@ Turborepo with npm workspaces. Packages: `apps/backend`, `apps/frontend`, `tools
    cd apps/frontend
    npm run dev
    ```
+
+### Configuration
+
+Backend configuration is layered — JSON files in `apps/backend/config/` provide the defaults per environment (`default.json`, `development.json`, `test.json`, `staging.json`, `production.json`), and `custom-environment-variables.json` maps environment variables on top of them. The merged result is validated with TypeBox at startup, so a missing or malformed value fails fast with a clear message instead of surfacing later at runtime.
+
+`development.json` already covers the database, cookies, tokens and LocalStack S3, so local development only needs `RESEND_API_KEY` exported in the shell. Variables recognised in every environment:
+
+| Variable                                        | Purpose                                       |
+| ----------------------------------------------- | --------------------------------------------- |
+| `DATABASE_URL`                                   | PostgreSQL connection string                  |
+| `RESEND_API_KEY`                                 | Transactional email                           |
+| `COOKIE_SECRET`                                  | Refresh-token cookie signing                  |
+| `ACCESS_TOKEN_SECRET` / `REFRESH_TOKEN_SECRET`   | JWT signing — `openssl rand -hex 32`          |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`    | S3 storage (`test`/`test` for LocalStack)     |
+| `LOG_LEVEL`                                      | `trace` … `fatal`                             |
+| `VITE_BACKEND_URL`                               | Frontend → backend URL (build-time)           |
+
+The secrets committed in `development.json` and `test.json` are throwaway values for local use — staging and production must get real ones from the environment.
+
+### Rebranding
+
+App name, initials, description, URL, contact email and author links live in a single object in `apps/frontend/src/config.ts`. Header, footer, page titles and meta tags all read from it, so renaming the app is one edit there plus the static tags in `apps/frontend/index.html`, `apps/frontend/public/robots.txt` and this README.
 
 ### Useful commands
 
