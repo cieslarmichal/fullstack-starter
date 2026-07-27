@@ -1,81 +1,123 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
+const productLinks = [
+  { name: 'Home', href: '/' },
+  { name: 'Sign In', href: '/login' },
+  { name: 'Sign Up', href: '/register' },
+];
+
+const currentYear = new Date().getFullYear();
+
 export default function Footer() {
   return (
     <footer
-      className="bg-primary text-primary-foreground py-14 mt-auto border-t border-primary/80"
+      className="bg-primary text-primary-foreground mt-auto"
       aria-label="Footer"
     >
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:justify-between md:items-start gap-10 px-4 sm:px-6 lg:px-8">
-        <div className="col-span-1 md:w-1/3">
-          <Link
-            to="/"
-            className="flex items-center gap-3 mb-4 group"
-          >
-            <div className="h-8 w-8 bg-primary-foreground rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
-              <span className="text-primary font-bold text-lg">FS</span>
+      <div className="max-w-350 mx-auto px-4 lg:px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr] gap-10">
+          <div className="lg:pr-6">
+            <Link
+              to="/"
+              className="flex items-center gap-3 group w-fit"
+            >
+              <div className="h-8 w-8 bg-primary-foreground rounded-md flex items-center justify-center transition-transform group-hover:scale-105">
+                <span className="text-primary font-bold text-lg">FS</span>
+              </div>
+              <h2 className="text-xl font-bold tracking-tight">Fullstack Starter</h2>
+            </Link>
+            <div className="flex items-center gap-2 mt-5">
+              <a
+                href="https://github.com/cieslarmichal/fullstack-starter"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="w-9 h-9 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 flex items-center justify-center transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </a>
             </div>
-            <h2 className="text-xl font-bold tracking-tight">Fullstack Starter</h2>
-          </Link>
-          <p className="text-sm opacity-80 leading-relaxed">
-            A modern fullstack starter with everything you need to build production-ready applications. Backend and
-            frontend pre-configured and ready to go.
-          </p>
-        </div>
+          </div>
 
-        <div className="col-span-1 md:w-1/3 md:ml-auto md:flex md:justify-end">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contact</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-3 opacity-80">
-                <Mail className="h-4 w-4" />
+            <h3 className="text-sm font-bold mb-4">Product</h3>
+            <ul className="space-y-2.5">
+              {productLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.href}
+                    className="text-sm opacity-70 hover:opacity-100 transition-opacity"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold mb-4">Contact</h3>
+            <ul className="space-y-3">
+              <li>
                 <a
                   href="mailto:contact@fullstack-starter.com"
-                  className="hover:opacity-100 transition-opacity"
+                  className="flex items-center gap-3 opacity-70 hover:opacity-100 transition-opacity"
                 >
-                  contact@fullstack-starter.com
+                  <Mail className="w-4 h-4 shrink-0" />
+                  <span className="text-sm">contact@fullstack-starter.com</span>
                 </a>
-              </div>
-              <div className="flex items-center gap-3 opacity-80">
-                <Phone className="h-4 w-4" />
+              </li>
+              <li>
                 <a
                   href="tel:+48123456789"
-                  className="hover:opacity-100 transition-opacity"
+                  className="flex items-center gap-3 opacity-70 hover:opacity-100 transition-opacity"
                 >
-                  +48 123 456 789
+                  <Phone className="w-4 h-4 shrink-0" />
+                  <span className="text-sm">+48 123 456 789</span>
                 </a>
-              </div>
-              <div className="flex items-center gap-3 opacity-80">
-                <MapPin className="h-4 w-4" />
+              </li>
+              <li>
                 <a
                   href="https://maps.google.com/?q=Cracow, Poland"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:opacity-100 transition-opacity"
+                  className="flex items-center gap-3 opacity-70 hover:opacity-100 transition-opacity"
                 >
-                  Cracow, Poland
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  <span className="text-sm">Cracow, Poland</span>
                 </a>
-              </div>
-            </div>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-primary/80 mt-10 pt-6 text-center px-4">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 opacity-80 text-sm">
-          <span>© 2026 Fullstack Starter</span>
-          <span>
+      <div className="border-t border-primary-foreground/15">
+        <div className="max-w-350 mx-auto px-4 lg:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs opacity-60">© {currentYear} Fullstack Starter. All rights reserved.</p>
+          <p className="text-xs opacity-60">
             Crafted by{' '}
             <a
               href="https://github.com/cieslarmichal"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:opacity-100 underline underline-offset-2 transition-opacity"
+              className="font-bold hover:opacity-100 underline underline-offset-2 transition-opacity"
             >
               Michał Cieślar
             </a>
-          </span>
+          </p>
         </div>
       </div>
     </footer>

@@ -14,7 +14,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
-      <div className="flex items-center px-4 sm:px-6 lg:px-8 py-3">
+      <div className="max-w-350 mx-auto flex items-center px-4 lg:px-6 py-3">
         <div className="w-48 flex items-center">
           <Link
             to={'/'}
