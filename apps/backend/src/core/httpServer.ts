@@ -99,18 +99,9 @@ export class HttpServer {
         return;
       }
 
-      request.startTime = Date.now();
-
       const requestId = IdService.generateUuid();
       request.id = requestId;
       reply.header('X-Request-ID', requestId);
-
-      this.loggerService.info({
-        message: 'Incoming HTTP request',
-        requestId: request.id,
-        method: request.method,
-        url: request.url,
-      });
 
       done();
     });
