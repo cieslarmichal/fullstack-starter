@@ -1,4 +1,4 @@
-import { boolean, index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const users = pgTable(
   'users',
@@ -21,8 +21,7 @@ export const userSessions = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    currentRefreshHash: text('current_refresh_hash').notNull().unique(),
-    prevRefreshHash: text('prev_refresh_hash'),
+    generation: integer('generation').notNull().default(0),
     prevUsableUntil: timestamp('prev_usable_until'),
     lastRotatedAt: timestamp('last_rotated_at').notNull().defaultNow(),
     status: varchar('status', { length: 16 }).notNull().default('active'),

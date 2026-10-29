@@ -8,6 +8,13 @@
       "when": 1778416384001,
       "tag": "0000_high_tyrannus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793120276662,
+      "tag": "0001_stateless_refresh_sessions",
+      "breakpoints": true
     }
   ]
 }
