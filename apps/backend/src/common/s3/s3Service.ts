@@ -30,7 +30,7 @@ export class S3Service {
     this.s3Client = s3Client;
   }
 
-  public async uploadBlob(payload: UploadFilePayload): Promise<UploadFileResult> {
+  public async uploadFile(payload: UploadFilePayload): Promise<UploadFileResult> {
     const { bucketName, fileName, data, contentType, attachmentName } = payload;
 
     const putObjectInput: PutObjectCommandInput = {
