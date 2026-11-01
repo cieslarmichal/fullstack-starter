@@ -162,9 +162,17 @@ The application is configured for deployment on Fly.io. Ensure you have the [Fly
    flyctl postgres create --name <your-app-name>-db --region <region>
    ```
 
-4. Set the database URL secret on the backend:
+4. Set the database URL secret on the backend. TLS is controlled only by `sslmode` in the connection string (there is no `ssl` config option), so production URLs should end with `?sslmode=verify-full`:
    ```bash
-   flyctl secrets set DATABASE_URL='<postgres-connection-string>' --app <your-app-name>-backend
+   flyctl secrets set DATABASE_URL='<postgres-connection-string>?sslmode=verify-full' --app <your-app-name>-backend
    ```
 
-5. CI/CD via GitHub Actions handles deployments on push to `main`.
+5. If your database provider uses a private CA (e.g. DigitalOcean managed Postgres), the server certificate can't be verified out of the box. Download the CA certificate from the provider's dashboard (DigitalOcean: database → Overview → Connection details → Download CA certificate) and store it as a base64-encoded secret:
+   ```bash
+   flyctl secrets set DB_CA_CERT="$(base64 < ca-certificate.crt)" --app <your-app-name>-backend
+   ```
+   `apps/backend/fly.toml` writes this secret to `/app/certs/db-ca.crt` on the machine (`[[files]]`) and sets `NODE_EXTRA_CA_CERTS` to that path, so Node trusts the CA. The secret must be set before deploying. If your provider uses a publicly trusted certificate, you can remove the `[[files]]` block and `NODE_EXTRA_CA_CERTS` from `fly.toml`.
+
+   Locally, leave `sslmode` out of the URL; the local Postgres runs without TLS.
+
+6. CI/CD via GitHub Actions handles deployments on push to `main`.
