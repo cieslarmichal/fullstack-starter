@@ -92,7 +92,7 @@ export class EmailQueueService {
     this.loggerService.debug({ message: 'Creating email queue' });
 
     await this.boss.createQueue(this.emailQueueName, {
-      retryLimit: 5,
+      retryLimit: 4,
       retryDelay: 2,
       retryBackoff: true,
     });
