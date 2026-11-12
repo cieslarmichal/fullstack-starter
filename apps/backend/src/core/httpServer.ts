@@ -54,7 +54,10 @@ export class HttpServer {
       connectionTimeout: 30000,
       keepAliveTimeout: 5000,
       requestTimeout: 30000,
-      trustProxy: true,
+      // Trust only the proxy directly in front of the app (Fly). `true` would trust the left-most X-Forwarded-For
+      // entry, which the client controls, letting anyone dodge per-IP rate limits. Raise the hop count by one for
+      // every additional proxy in front of Fly (e.g. Cloudflare).
+      trustProxy: (_address, hop) => hop < 1,
     }).withTypeProvider<TypeBoxTypeProvider>();
   }
 
@@ -96,6 +99,21 @@ export class HttpServer {
       const isNoise = noiseUrlPatterns.some((pattern) => pattern.test(request.url));
       return isOptions || isHealth || isNoise;
     };
+
+    // This is a JSON/image API, never something that should be framed, sniffed or allowed to load subresources.
+    // Images may be embedded by the frontend on another origin, so Cross-Origin-Resource-Policy must stay open.
+    this.fastifyServer.addHook('onSend', (_request, reply, _payload, done) => {
+      reply.header('X-Content-Type-Options', 'nosniff');
+      reply.header('X-Frame-Options', 'DENY');
+      reply.header('Referrer-Policy', 'no-referrer');
+      reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+      reply.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+      reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+      reply.header('Cross-Origin-Opener-Policy', 'same-origin');
+      reply.header('Cross-Origin-Resource-Policy', 'cross-origin');
+      reply.removeHeader('X-Powered-By');
+      done();
+    });
 
     this.fastifyServer.addHook('onRequest', (request, reply, done) => {
       if (skipRequestLog(request)) {
