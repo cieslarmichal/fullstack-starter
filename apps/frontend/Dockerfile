@@ -23,7 +23,7 @@ COPY --from=pruner /app/out/full/ .
 
 RUN npm run build --filter="@apps/frontend"
 
-FROM nginx as static
+FROM nginx:1.31.9 as static
 
 COPY --from=installer /app/apps/frontend/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=installer /app/apps/frontend/nginx/security-headers.conf /etc/nginx/security-headers.conf
